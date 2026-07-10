@@ -23,7 +23,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 
 export function SiteHeader() {
   const user = useUser();
-  const isAdmin = useIsAdmin();
+  const isStaff = useIsStaff();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
