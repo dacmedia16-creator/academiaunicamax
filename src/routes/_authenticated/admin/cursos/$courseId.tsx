@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCourse, fetchCourseTree } from "@/lib/courses";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,10 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowDown, ArrowUp, Trash2 } from "lucide-react";
+import { useIsAdmin } from "@/hooks/use-auth";
+import { assignCourseManager } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/cursos/$courseId")({
   component: EditCourse,
 });
+
 
 function EditCourse() {
   const { courseId } = Route.useParams();
