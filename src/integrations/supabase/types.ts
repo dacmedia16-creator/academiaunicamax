@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_managers: {
+        Row: {
+          assigned_by: string | null
+          course_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          course_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          course_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_managers_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           cover_url: string | null
@@ -222,6 +251,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_course_manager: {
+        Args: { _course_id: string; _user_id: string }
         Returns: boolean
       }
       is_lesson_unlocked: {
