@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin, useUser } from "@/hooks/use-auth";
+import { useIsStaff, useUser } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Shield, User as UserIcon } from "lucide-react";
 
