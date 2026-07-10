@@ -253,7 +253,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "student"
+      app_role: "admin" | "student" | "manager"
       video_provider: "youtube" | "vimeo" | "url"
     }
     CompositeTypes: {
@@ -382,7 +382,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "student"],
+      app_role: ["admin", "student", "manager"],
       video_provider: ["youtube", "vimeo", "url"],
     },
   },
