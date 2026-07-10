@@ -3,22 +3,22 @@
 Plataforma educacional responsiva com autenticação, cursos em vídeo, progresso
 individual, desbloqueio sequencial de aulas e painel administrativo.
 
-## Como definir o primeiro administrador
+## Super administrador
 
-Por segurança, um novo usuário nunca pode se auto-promover a administrador.
-Para nomear o primeiro admin:
+O e-mail **dacmedia16@gmail.com** é promovido automaticamente a administrador
+assim que se cadastra e confirma a conta (proteção server-side por trigger).
+Basta acessar `/auth` e criar a conta com esse e-mail — o menu **Admin**
+aparece automaticamente após o login.
 
-1. Cadastre-se normalmente pela tela `/auth`.
-2. Na Lovable Cloud, execute a instrução SQL abaixo (substitua o `user_id`
-   correto — você encontra em **Users**):
+## Criando novos usuários e administradores
 
-```sql
-insert into public.user_roles (user_id, role)
-values ('<UUID_DO_USUARIO>', 'admin')
-on conflict do nothing;
-```
+Já dentro do painel, em **Admin → Usuários**:
 
-3. Faça logout/login. O menu **Admin** passará a aparecer.
+- Botão **Novo usuário** cria contas com e-mail já confirmado (nome, e-mail,
+  senha, papel Aluno/Admin).
+- Cada linha da tabela permite promover/rebaixar admins ou excluir contas.
+- O super administrador é protegido: não pode ser rebaixado nem excluído pela
+  interface.
 
 Novos administradores podem ser gerenciados pelo mesmo comando ou (futuramente)
 pela própria interface.
