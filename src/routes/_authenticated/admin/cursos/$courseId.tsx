@@ -184,3 +184,64 @@ function EditCourse() {
     </div>
   );
 }
+
+function ManagersSection({ courseId }: { courseId: string }) {
+  const isAdmin = useIsAdmin();
+  const qc = useQueryClient();
+  const assignFn = useServerFn(assignCourseManager);
+
+  const { data } = useQuery({
+    queryKey: ["course-managers-panel", courseId],
+    queryFn: async () => {
+      const { data: managerRoles } = await supabase.from("user_roles").select("user_id").eq("role", "manager");
+      const ids = (managerRoles ?? []).map((r) => r.user_id);
+      if (ids.length === 0) return { managers: [] as Array<{ id: string; email: string; full_name: string | null; assigned: boolean }> };
+      const [{ data: profiles }, { data: assigned }] = await Promise.all([
+        supabase.from("profiles").select("id, email, full_name").in("id", ids),
+        supabase.from("course_managers").select("user_id").eq("course_id", courseId),
+      ]);
+      const assignedSet = new Set((assigned ?? []).map((a) => a.user_id));
+      return {
+        managers: (profiles ?? []).map((p) => ({
+          id: p.id, email: p.email, full_name: p.full_name, assigned: assignedSet.has(p.id),
+        })),
+      };
+    },
+    enabled: isAdmin === true,
+  });
+
+  if (!isAdmin) return null;
+
+  async function toggle(userId: string, enabled: boolean) {
+    try {
+      await assignFn({ data: { course_id: courseId, user_id: userId, enabled } });
+      qc.invalidateQueries({ queryKey: ["course-managers-panel", courseId] });
+      toast.success(enabled ? "Gestor atribuído" : "Gestor removido");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro");
+    }
+  }
+
+  return (
+    <Card><CardContent className="pt-6">
+      <h3 className="mb-2 text-lg font-bold">Gestores do curso</h3>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Marque quais gestores podem editar, publicar e gerenciar módulos e aulas deste curso.
+      </p>
+      <div className="space-y-2">
+        {data?.managers.length === 0 && (
+          <p className="text-sm text-muted-foreground">Nenhum usuário com papel Gestor ainda. Promova um usuário na aba Usuários.</p>
+        )}
+        {data?.managers.map((m) => (
+          <div key={m.id} className="flex items-center justify-between rounded-md border border-border p-3">
+            <div className="min-w-0">
+              <div className="truncate font-medium">{m.full_name || m.email}</div>
+              <div className="text-xs text-muted-foreground">{m.email}</div>
+            </div>
+            <Switch checked={m.assigned} onCheckedChange={(v) => toggle(m.id, v)} aria-label="Atribuir gestor" />
+          </div>
+        ))}
+      </div>
+    </CardContent></Card>
+  );
+}
