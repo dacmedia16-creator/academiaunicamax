@@ -9,38 +9,240 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
+import { Route as AuthForgotRouteImport } from './routes/auth/forgot'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAppPerfilRouteImport } from './routes/_authenticated/app/perfil'
+import { Route as AuthenticatedAppCursosIndexRouteImport } from './routes/_authenticated/app/cursos/index'
+import { Route as AuthenticatedAdminUsuariosIndexRouteImport } from './routes/_authenticated/admin/usuarios/index'
+import { Route as AuthenticatedAdminCursosIndexRouteImport } from './routes/_authenticated/admin/cursos/index'
+import { Route as AuthenticatedAppCursosCourseIdRouteImport } from './routes/_authenticated/app/cursos/$courseId'
+import { Route as AuthenticatedAppAulasLessonIdRouteImport } from './routes/_authenticated/app/aulas/$lessonId'
+import { Route as AuthenticatedAdminCursosCourseIdRouteImport } from './routes/_authenticated/admin/cursos/$courseId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/auth/',
+  path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotRoute = AuthForgotRouteImport.update({
+  id: '/auth/forgot',
+  path: '/auth/forgot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAppPerfilRoute = AuthenticatedAppPerfilRouteImport.update({
+  id: '/app/perfil',
+  path: '/app/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppCursosIndexRoute =
+  AuthenticatedAppCursosIndexRouteImport.update({
+    id: '/app/cursos/',
+    path: '/app/cursos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminUsuariosIndexRoute =
+  AuthenticatedAdminUsuariosIndexRouteImport.update({
+    id: '/usuarios/',
+    path: '/usuarios/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminCursosIndexRoute =
+  AuthenticatedAdminCursosIndexRouteImport.update({
+    id: '/cursos/',
+    path: '/cursos/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAppCursosCourseIdRoute =
+  AuthenticatedAppCursosCourseIdRouteImport.update({
+    id: '/app/cursos/$courseId',
+    path: '/app/cursos/$courseId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppAulasLessonIdRoute =
+  AuthenticatedAppAulasLessonIdRouteImport.update({
+    id: '/app/aulas/$lessonId',
+    path: '/app/aulas/$lessonId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminCursosCourseIdRoute =
+  AuthenticatedAdminCursosCourseIdRouteImport.update({
+    id: '/cursos/$courseId',
+    path: '/cursos/$courseId',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/auth/forgot': typeof AuthForgotRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/': typeof AuthIndexRoute
+  '/app/perfil': typeof AuthenticatedAppPerfilRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/admin/cursos/$courseId': typeof AuthenticatedAdminCursosCourseIdRoute
+  '/app/aulas/$lessonId': typeof AuthenticatedAppAulasLessonIdRoute
+  '/app/cursos/$courseId': typeof AuthenticatedAppCursosCourseIdRoute
+  '/admin/cursos/': typeof AuthenticatedAdminCursosIndexRoute
+  '/admin/usuarios/': typeof AuthenticatedAdminUsuariosIndexRoute
+  '/app/cursos/': typeof AuthenticatedAppCursosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auth/forgot': typeof AuthForgotRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth': typeof AuthIndexRoute
+  '/app/perfil': typeof AuthenticatedAppPerfilRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/admin/cursos/$courseId': typeof AuthenticatedAdminCursosCourseIdRoute
+  '/app/aulas/$lessonId': typeof AuthenticatedAppAulasLessonIdRoute
+  '/app/cursos/$courseId': typeof AuthenticatedAppCursosCourseIdRoute
+  '/admin/cursos': typeof AuthenticatedAdminCursosIndexRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosIndexRoute
+  '/app/cursos': typeof AuthenticatedAppCursosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/auth/forgot': typeof AuthForgotRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/': typeof AuthIndexRoute
+  '/_authenticated/app/perfil': typeof AuthenticatedAppPerfilRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/admin/cursos/$courseId': typeof AuthenticatedAdminCursosCourseIdRoute
+  '/_authenticated/app/aulas/$lessonId': typeof AuthenticatedAppAulasLessonIdRoute
+  '/_authenticated/app/cursos/$courseId': typeof AuthenticatedAppCursosCourseIdRoute
+  '/_authenticated/admin/cursos/': typeof AuthenticatedAdminCursosIndexRoute
+  '/_authenticated/admin/usuarios/': typeof AuthenticatedAdminUsuariosIndexRoute
+  '/_authenticated/app/cursos/': typeof AuthenticatedAppCursosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/sitemap.xml'
+    | '/admin'
+    | '/auth/forgot'
+    | '/auth/reset-password'
+    | '/auth/'
+    | '/app/perfil'
+    | '/admin/'
+    | '/app/'
+    | '/admin/cursos/$courseId'
+    | '/app/aulas/$lessonId'
+    | '/app/cursos/$courseId'
+    | '/admin/cursos/'
+    | '/admin/usuarios/'
+    | '/app/cursos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/sitemap.xml'
+    | '/auth/forgot'
+    | '/auth/reset-password'
+    | '/auth'
+    | '/app/perfil'
+    | '/admin'
+    | '/app'
+    | '/admin/cursos/$courseId'
+    | '/app/aulas/$lessonId'
+    | '/app/cursos/$courseId'
+    | '/admin/cursos'
+    | '/admin/usuarios'
+    | '/app/cursos'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/sitemap.xml'
+    | '/_authenticated/admin'
+    | '/auth/forgot'
+    | '/auth/reset-password'
+    | '/auth/'
+    | '/_authenticated/app/perfil'
+    | '/_authenticated/admin/'
+    | '/_authenticated/app/'
+    | '/_authenticated/admin/cursos/$courseId'
+    | '/_authenticated/app/aulas/$lessonId'
+    | '/_authenticated/app/cursos/$courseId'
+    | '/_authenticated/admin/cursos/'
+    | '/_authenticated/admin/usuarios/'
+    | '/_authenticated/app/cursos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  AuthForgotRoute: typeof AuthForgotRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +250,150 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot': {
+      id: '/auth/forgot'
+      path: '/auth/forgot'
+      fullPath: '/auth/forgot'
+      preLoaderRoute: typeof AuthForgotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/app'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/app/perfil': {
+      id: '/_authenticated/app/perfil'
+      path: '/app/perfil'
+      fullPath: '/app/perfil'
+      preLoaderRoute: typeof AuthenticatedAppPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/cursos/': {
+      id: '/_authenticated/app/cursos/'
+      path: '/app/cursos'
+      fullPath: '/app/cursos/'
+      preLoaderRoute: typeof AuthenticatedAppCursosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/usuarios/': {
+      id: '/_authenticated/admin/usuarios/'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios/'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/cursos/': {
+      id: '/_authenticated/admin/cursos/'
+      path: '/cursos'
+      fullPath: '/admin/cursos/'
+      preLoaderRoute: typeof AuthenticatedAdminCursosIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/app/cursos/$courseId': {
+      id: '/_authenticated/app/cursos/$courseId'
+      path: '/app/cursos/$courseId'
+      fullPath: '/app/cursos/$courseId'
+      preLoaderRoute: typeof AuthenticatedAppCursosCourseIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/aulas/$lessonId': {
+      id: '/_authenticated/app/aulas/$lessonId'
+      path: '/app/aulas/$lessonId'
+      fullPath: '/app/aulas/$lessonId'
+      preLoaderRoute: typeof AuthenticatedAppAulasLessonIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/cursos/$courseId': {
+      id: '/_authenticated/admin/cursos/$courseId'
+      path: '/cursos/$courseId'
+      fullPath: '/admin/cursos/$courseId'
+      preLoaderRoute: typeof AuthenticatedAdminCursosCourseIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminCursosCourseIdRoute: typeof AuthenticatedAdminCursosCourseIdRoute
+  AuthenticatedAdminCursosIndexRoute: typeof AuthenticatedAdminCursosIndexRoute
+  AuthenticatedAdminUsuariosIndexRoute: typeof AuthenticatedAdminUsuariosIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+    AuthenticatedAdminCursosCourseIdRoute:
+      AuthenticatedAdminCursosCourseIdRoute,
+    AuthenticatedAdminCursosIndexRoute: AuthenticatedAdminCursosIndexRoute,
+    AuthenticatedAdminUsuariosIndexRoute: AuthenticatedAdminUsuariosIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAppPerfilRoute: typeof AuthenticatedAppPerfilRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppAulasLessonIdRoute: typeof AuthenticatedAppAulasLessonIdRoute
+  AuthenticatedAppCursosCourseIdRoute: typeof AuthenticatedAppCursosCourseIdRoute
+  AuthenticatedAppCursosIndexRoute: typeof AuthenticatedAppCursosIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedAppPerfilRoute: AuthenticatedAppPerfilRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppAulasLessonIdRoute: AuthenticatedAppAulasLessonIdRoute,
+  AuthenticatedAppCursosCourseIdRoute: AuthenticatedAppCursosCourseIdRoute,
+  AuthenticatedAppCursosIndexRoute: AuthenticatedAppCursosIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  AuthForgotRoute: AuthForgotRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
