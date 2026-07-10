@@ -126,6 +126,8 @@ function EditCourse() {
         </form>
       </CardContent></Card>
 
+      <ManagersSection courseId={courseId} />
+
       <Card><CardContent className="pt-6">
         <h3 className="mb-4 text-lg font-bold">Módulos</h3>
         <form className="mb-4 flex gap-2" onSubmit={addModule}>
