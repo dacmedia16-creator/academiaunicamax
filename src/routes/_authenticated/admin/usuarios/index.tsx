@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@/hooks/use-auth";
+import { useIsAdmin, useUser } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { UserPlus, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { UserPlus, ShieldCheck, ShieldOff, Trash2, Briefcase, BriefcaseBusiness } from "lucide-react";
 import {
   createUserAsAdmin, setUserRole, deleteUserAsAdmin,
 } from "@/lib/admin-users.functions";
@@ -62,6 +62,7 @@ async function fetchUsersWithProgress() {
 function UsersPage() {
   const qc = useQueryClient();
   const currentUser = useUser();
+  const isAdmin = useIsAdmin();
   const { data } = useQuery({ queryKey: ["admin-users"], queryFn: fetchUsersWithProgress });
 
   const createFn = useServerFn(createUserAsAdmin);
@@ -70,7 +71,7 @@ function UsersPage() {
 
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ full_name: "", email: "", password: "", role: "student" as "student" | "admin" });
+  const [form, setForm] = useState({ full_name: "", email: "", password: "", role: "student" as "student" | "admin" | "manager" });
   const [rowBusy, setRowBusy] = useState<string | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
@@ -89,11 +90,11 @@ function UsersPage() {
     }
   }
 
-  async function toggleAdmin(userId: string, makeAdmin: boolean) {
+  async function toggleRole(userId: string, role: "admin" | "manager", enabled: boolean) {
     setRowBusy(userId);
     try {
-      await roleFn({ data: { user_id: userId, role: "admin", enabled: makeAdmin } });
-      toast.success(makeAdmin ? "Promovido a admin" : "Acesso admin removido");
+      await roleFn({ data: { user_id: userId, role, enabled } });
+      toast.success("Papel atualizado");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao alterar papel");
@@ -118,7 +119,9 @@ function UsersPage() {
   return (
     <Card><CardContent className="pt-6">
       <div className="mb-4 flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">Gerencie contas, papéis e acompanhe o progresso.</p>
+        <p className="text-sm text-muted-foreground">
+          {isAdmin ? "Gerencie contas, papéis e acompanhe o progresso." : "Crie contas de alunos e acompanhe o progresso."}
+        </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><UserPlus className="mr-1 h-4 w-4" />Novo usuário</Button>
@@ -150,7 +153,8 @@ function UsersPage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">Aluno</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
+                    {isAdmin && <SelectItem value="manager">Gestor</SelectItem>}
+                    {isAdmin && <SelectItem value="admin">Administrador</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -174,50 +178,74 @@ function UsersPage() {
           </thead>
           <tbody>
             {data?.map((u) => {
-              const isAdmin = u.roles.includes("admin");
+              const rowIsAdmin = u.roles.includes("admin");
+              const rowIsManager = u.roles.includes("manager");
               const isSuper = u.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
               const isSelf = currentUser?.id === u.id;
               const disabled = rowBusy === u.id;
+              // Managers can only delete pure students
+              const canDelete = isAdmin ? (!isSuper && !isSelf) : (!rowIsAdmin && !rowIsManager && !isSelf);
               return (
                 <tr key={u.id} className="border-t border-border">
                   <td className="py-2 pr-3">{u.full_name || "—"}{isSuper && <Badge className="ml-2" variant="outline">Super</Badge>}</td>
                   <td className="pr-3">{u.email}</td>
-                  <td className="pr-3">{isAdmin ? <Badge>Admin</Badge> : <Badge variant="secondary">Aluno</Badge>}</td>
+                  <td className="pr-3">
+                    {rowIsAdmin && <Badge className="mr-1">Admin</Badge>}
+                    {rowIsManager && <Badge className="mr-1" variant="outline">Gestor</Badge>}
+                    {!rowIsAdmin && !rowIsManager && <Badge variant="secondary">Aluno</Badge>}
+                  </td>
                   <td className="pr-3">{u.courses_started}</td>
                   <td className="pr-3">{u.completed}</td>
                   <td className="pr-3">{u.last ? new Date(u.last).toLocaleString("pt-BR") : "—"}</td>
                   <td className="pr-3 text-right">
                     <div className="inline-flex gap-1">
-                      {isAdmin ? (
-                        <Button size="sm" variant="outline" disabled={disabled || isSuper || isSelf}
-                          onClick={() => toggleAdmin(u.id, false)} title={isSuper ? "Super admin protegido" : "Remover admin"}>
-                          <ShieldOff className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled={disabled}
-                          onClick={() => toggleAdmin(u.id, true)} title="Tornar admin">
-                          <ShieldCheck className="h-4 w-4" />
-                        </Button>
+                      {isAdmin && (
+                        <>
+                          {rowIsAdmin ? (
+                            <Button size="sm" variant="outline" disabled={disabled || isSuper || isSelf}
+                              onClick={() => toggleRole(u.id, "admin", false)} title={isSuper ? "Super admin protegido" : "Remover admin"}>
+                              <ShieldOff className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" disabled={disabled}
+                              onClick={() => toggleRole(u.id, "admin", true)} title="Tornar admin">
+                              <ShieldCheck className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {rowIsManager ? (
+                            <Button size="sm" variant="outline" disabled={disabled}
+                              onClick={() => toggleRole(u.id, "manager", false)} title="Remover gestor">
+                              <Briefcase className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" disabled={disabled}
+                              onClick={() => toggleRole(u.id, "manager", true)} title="Tornar gestor">
+                              <BriefcaseBusiness className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </>
                       )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="outline" disabled={disabled || isSuper || isSelf} title={isSuper ? "Super admin protegido" : "Excluir"}>
-                            <Trash2 className="h-4 w-4 text-[color:var(--color-brand-red)]" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Essa ação remove o acesso de {u.email} e apaga o progresso. Não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => removeUser(u.id)}>Excluir</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      {canDelete && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" disabled={disabled} title="Excluir">
+                              <Trash2 className="h-4 w-4 text-[color:var(--color-brand-red)]" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação remove o acesso de {u.email} e apaga o progresso. Não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => removeUser(u.id)}>Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </td>
                 </tr>
