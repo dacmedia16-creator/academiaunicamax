@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin, useUser } from "@/hooks/use-auth";
+import { useIsStaff, useUser } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Shield, User as UserIcon } from "lucide-react";
 
@@ -23,7 +23,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 
 export function SiteHeader() {
   const user = useUser();
-  const isAdmin = useIsAdmin();
+  const isStaff = useIsStaff();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -44,9 +44,9 @@ export function SiteHeader() {
               <Link to="/app" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Início</Link>
               <Link to="/app/cursos" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Cursos</Link>
               <Link to="/app/perfil" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Perfil</Link>
-              {isAdmin && (
+              {isStaff && (
                 <Link to="/admin" className="rounded-md px-3 py-2 text-sm font-medium text-[color:var(--color-brand-red)] hover:bg-accent" activeProps={{ className: "bg-accent" }}>
-                  <span className="inline-flex items-center gap-1"><Shield className="h-4 w-4" />Admin</span>
+                  <span className="inline-flex items-center gap-1"><Shield className="h-4 w-4" />Painel</span>
                 </Link>
               )}
             </>

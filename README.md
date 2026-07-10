@@ -33,3 +33,11 @@ pela própria interface.
 Funções server-side (`is_lesson_unlocked`, `upsert_lesson_progress`) validam
 regras no banco: RLS protege leitura e escrita, e o desbloqueio é decidido no
 servidor — mudar dados no navegador não libera nada.
+
+## Papel Gestor
+
+- Admin promove um usuário a **Gestor** em `/admin/usuarios` (botão da maleta).
+- Na página de edição de qualquer curso (`/admin/cursos/<id>`), a seção **Gestores do curso** permite marcar quais gestores administram aquele curso.
+- Gestor logado vê apenas os cursos atribuídos + os que ele mesmo criar (vira gestor automaticamente).
+- Gestor pode criar/editar/publicar/excluir módulos e aulas dos seus cursos, criar novos cursos, e criar/excluir contas de alunos.
+- Gestor **não** promove, rebaixa nem exclui administradores ou outros gestores.
