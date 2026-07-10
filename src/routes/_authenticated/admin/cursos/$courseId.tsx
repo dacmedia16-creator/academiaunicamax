@@ -72,7 +72,7 @@ function EditCourse() {
       module_id: moduleId,
       title: String(fd.get("ltitle") ?? "").trim(),
       description: String(fd.get("ldesc") ?? "").trim() || null,
-      video_provider: String(fd.get("provider") ?? "youtube"),
+      video_provider: (String(fd.get("provider") ?? "youtube") as "youtube" | "vimeo" | "url"),
       video_ref: String(fd.get("vref") ?? "").trim(),
       duration_seconds: Number(fd.get("dur") ?? 0) || 0,
       sort_order: currentLessons.length + 1,
