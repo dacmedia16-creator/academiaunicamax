@@ -67,7 +67,7 @@ export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { user_id: string; role: "admin" | "manager"; enabled: boolean }) => {
     if (!input.user_id) throw new Error("user_id obrigatório");
-    const role = input.role === "manager" ? "manager" : "admin";
+    const role: "admin" | "manager" = input.role === "manager" ? "manager" : "admin";
     return { user_id: String(input.user_id), role, enabled: Boolean(input.enabled) };
   })
   .handler(async ({ data, context }) => {
