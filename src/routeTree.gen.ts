@@ -9,38 +9,159 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
+import { Route as AuthForgotRouteImport } from './routes/auth/forgot'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAppPerfilRouteImport } from './routes/_authenticated/app/perfil'
+import { Route as AuthenticatedAppCursosIndexRouteImport } from './routes/_authenticated/app/cursos/index'
+import { Route as AuthenticatedAppCursosCourseIdRouteImport } from './routes/_authenticated/app/cursos/$courseId'
+import { Route as AuthenticatedAppAulasLessonIdRouteImport } from './routes/_authenticated/app/aulas/$lessonId'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/auth/',
+  path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotRoute = AuthForgotRouteImport.update({
+  id: '/auth/forgot',
+  path: '/auth/forgot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppPerfilRoute = AuthenticatedAppPerfilRouteImport.update({
+  id: '/app/perfil',
+  path: '/app/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppCursosIndexRoute =
+  AuthenticatedAppCursosIndexRouteImport.update({
+    id: '/app/cursos/',
+    path: '/app/cursos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppCursosCourseIdRoute =
+  AuthenticatedAppCursosCourseIdRouteImport.update({
+    id: '/app/cursos/$courseId',
+    path: '/app/cursos/$courseId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAppAulasLessonIdRoute =
+  AuthenticatedAppAulasLessonIdRouteImport.update({
+    id: '/app/aulas/$lessonId',
+    path: '/app/aulas/$lessonId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth/forgot': typeof AuthForgotRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/': typeof AuthIndexRoute
+  '/app/perfil': typeof AuthenticatedAppPerfilRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/aulas/$lessonId': typeof AuthenticatedAppAulasLessonIdRoute
+  '/app/cursos/$courseId': typeof AuthenticatedAppCursosCourseIdRoute
+  '/app/cursos/': typeof AuthenticatedAppCursosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth/forgot': typeof AuthForgotRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth': typeof AuthIndexRoute
+  '/app/perfil': typeof AuthenticatedAppPerfilRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/app/aulas/$lessonId': typeof AuthenticatedAppAulasLessonIdRoute
+  '/app/cursos/$courseId': typeof AuthenticatedAppCursosCourseIdRoute
+  '/app/cursos': typeof AuthenticatedAppCursosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth/forgot': typeof AuthForgotRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/': typeof AuthIndexRoute
+  '/_authenticated/app/perfil': typeof AuthenticatedAppPerfilRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/aulas/$lessonId': typeof AuthenticatedAppAulasLessonIdRoute
+  '/_authenticated/app/cursos/$courseId': typeof AuthenticatedAppCursosCourseIdRoute
+  '/_authenticated/app/cursos/': typeof AuthenticatedAppCursosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth/forgot'
+    | '/auth/reset-password'
+    | '/auth/'
+    | '/app/perfil'
+    | '/app/'
+    | '/app/aulas/$lessonId'
+    | '/app/cursos/$courseId'
+    | '/app/cursos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth/forgot'
+    | '/auth/reset-password'
+    | '/auth'
+    | '/app/perfil'
+    | '/app'
+    | '/app/aulas/$lessonId'
+    | '/app/cursos/$courseId'
+    | '/app/cursos'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth/forgot'
+    | '/auth/reset-password'
+    | '/auth/'
+    | '/_authenticated/app/perfil'
+    | '/_authenticated/app/'
+    | '/_authenticated/app/aulas/$lessonId'
+    | '/_authenticated/app/cursos/$courseId'
+    | '/_authenticated/app/cursos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthForgotRoute: typeof AuthForgotRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +169,91 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot': {
+      id: '/auth/forgot'
+      path: '/auth/forgot'
+      fullPath: '/auth/forgot'
+      preLoaderRoute: typeof AuthForgotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/app'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/perfil': {
+      id: '/_authenticated/app/perfil'
+      path: '/app/perfil'
+      fullPath: '/app/perfil'
+      preLoaderRoute: typeof AuthenticatedAppPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/cursos/': {
+      id: '/_authenticated/app/cursos/'
+      path: '/app/cursos'
+      fullPath: '/app/cursos/'
+      preLoaderRoute: typeof AuthenticatedAppCursosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/cursos/$courseId': {
+      id: '/_authenticated/app/cursos/$courseId'
+      path: '/app/cursos/$courseId'
+      fullPath: '/app/cursos/$courseId'
+      preLoaderRoute: typeof AuthenticatedAppCursosCourseIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/aulas/$lessonId': {
+      id: '/_authenticated/app/aulas/$lessonId'
+      path: '/app/aulas/$lessonId'
+      fullPath: '/app/aulas/$lessonId'
+      preLoaderRoute: typeof AuthenticatedAppAulasLessonIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppPerfilRoute: typeof AuthenticatedAppPerfilRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppAulasLessonIdRoute: typeof AuthenticatedAppAulasLessonIdRoute
+  AuthenticatedAppCursosCourseIdRoute: typeof AuthenticatedAppCursosCourseIdRoute
+  AuthenticatedAppCursosIndexRoute: typeof AuthenticatedAppCursosIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppPerfilRoute: AuthenticatedAppPerfilRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppAulasLessonIdRoute: AuthenticatedAppAulasLessonIdRoute,
+  AuthenticatedAppCursosCourseIdRoute: AuthenticatedAppCursosCourseIdRoute,
+  AuthenticatedAppCursosIndexRoute: AuthenticatedAppCursosIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthForgotRoute: AuthForgotRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
