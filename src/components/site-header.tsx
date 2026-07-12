@@ -4,13 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsStaff, useUser } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Shield, User as UserIcon } from "lucide-react";
+import logoAsset from "@/assets/academia-remax-logo.png.asset.json";
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link to="/" className="flex items-center gap-2">
-      <div className="grid h-9 w-9 place-items-center rounded-md bg-brand-gradient text-white font-black shadow-sm">
-        R
-      </div>
+      <img src={logoAsset.url} alt="Academia RE/MAX" className="h-10 w-10 object-contain" />
+
       {!compact && (
         <div className="leading-tight">
           <div className="font-display text-base font-extrabold tracking-tight">RE/MAX <span className="text-[color:var(--color-brand-red)]">Academy</span></div>
