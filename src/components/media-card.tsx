@@ -13,7 +13,7 @@ export type MediaCardProps = {
   status: MediaCardStatus;
   /** Extra hint below status, e.g. "45% assistido" or "3/10 aulas". */
   hint?: string;
-  linkProps?: LinkProps;
+  linkProps?: AnyLinkProps;
   disabled?: boolean;
   /** When true, forces gradient placeholder even if thumbnailUrl provided. */
   gradientOnly?: boolean;
