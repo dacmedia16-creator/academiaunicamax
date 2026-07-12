@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-type AnyLinkProps = React.ComponentProps<typeof Link>;
 import { CheckCircle2, Clock, Lock, PlayCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +12,7 @@ export type MediaCardProps = {
   status: MediaCardStatus;
   /** Extra hint below status, e.g. "45% assistido" or "3/10 aulas". */
   hint?: string;
-  linkProps?: AnyLinkProps;
+  linkProps?: { to: string; params?: Record<string, string> };
   disabled?: boolean;
   /** When true, forces gradient placeholder even if thumbnailUrl provided. */
   gradientOnly?: boolean;
