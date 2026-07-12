@@ -165,5 +165,5 @@ export function MediaCard(props: MediaCardProps) {
   if (disabled || !linkProps) {
     return <div title={disabled ? "Conclua a aula anterior para desbloquear" : undefined}>{body}</div>;
   }
-  return <Link {...linkProps}>{body}</Link>;
+  return <Link {...(linkProps as any)}>{body}</Link>;
 }
