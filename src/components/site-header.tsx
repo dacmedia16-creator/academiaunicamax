@@ -13,7 +13,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 
       {!compact && (
         <div className="leading-tight">
-          <div className="font-display text-base font-extrabold tracking-tight">RE/MAX <span className="text-[color:var(--color-brand-red)]">Academy</span></div>
+          <div className="font-display text-base font-extrabold tracking-tight">REMAX <span className="text-[color:var(--color-brand-red)]">Academy</span></div>
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Treinamentos</div>
         </div>
       )}
