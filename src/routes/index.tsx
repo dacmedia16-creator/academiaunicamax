@@ -45,23 +45,16 @@ function LandingPage() {
             </div>
           </div>
           <div className="relative">
-            <div className="rounded-2xl bg-brand-gradient p-1 shadow-xl">
-              <div className="rounded-[calc(1rem-2px)] bg-card p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <BrandMark compact />
-                  <span className="rounded-full bg-[color:var(--color-brand-red)]/10 px-2 py-0.5 text-xs font-medium text-[color:var(--color-brand-red)]">Ao vivo</span>
-                </div>
-                <div className="aspect-video rounded-lg bg-[color:var(--color-muted)] grid place-items-center">
-                  <PlayCircle className="h-16 w-16 text-[color:var(--color-brand)]" />
-                </div>
-                <h3 className="mt-4 font-semibold">Introdução ao mercado imobiliário</h3>
-                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                  <ShieldCheck className="h-4 w-4 text-[color:var(--color-success)]" />
-                  Aulas em sequência, seu progresso salvo automaticamente.
-                </div>
-              </div>
+            <div className="overflow-hidden rounded-2xl shadow-xl ring-1 ring-border">
+              <img
+                src={bannerAsset.url}
+                alt="Academia RE/MAX — Treinamento que transforma, resultados que se destacam"
+                className="h-auto w-full object-cover"
+                loading="eager"
+              />
             </div>
           </div>
+
         </div>
       </section>
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
