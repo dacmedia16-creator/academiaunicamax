@@ -4,9 +4,10 @@ import { fetchCourses, fetchMyProgress, fetchCourseTree, orderPublishedLessons, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, CheckCircle2, PlayCircle, Clock, ArrowRight, Sparkles, Trophy } from "lucide-react";
+import { BookOpen, CheckCircle2, PlayCircle, ArrowRight, Sparkles, Trophy } from "lucide-react";
 import { useUser } from "@/hooks/use-auth";
+import { MediaCard, type MediaCardStatus } from "@/components/media-card";
+import { videoThumbnailUrl, videoThumbnailUrlHQ } from "@/lib/video-thumbnail";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: HomePage,
@@ -16,6 +17,9 @@ type CourseState = {
   id: string;
   title: string;
   description: string | null;
+  coverUrl: string | null;
+  firstLesson: Lesson | null;
+  totalDurationSecs: number;
   total: number;
   done: number;
   pct: number;
@@ -54,7 +58,12 @@ function HomePage() {
     );
     const status: CourseState["status"] =
       total > 0 && done === total ? "completed" : done > 0 ? "in-progress" : "not-started";
-    return { id: c.id, title: c.title, description: c.description, total, done, pct, nextLesson, lastWatchedAt, status };
+    return {
+      id: c.id, title: c.title, description: c.description,
+      coverUrl: c.cover_url, firstLesson: ordered[0] ?? null,
+      totalDurationSecs: ordered.reduce((s, l) => s + (l.duration_seconds || 0), 0),
+      total, done, pct, nextLesson, lastWatchedAt, status,
+    };
   });
 
   const totalLessons = states.reduce((s, c) => s + c.total, 0);
@@ -236,76 +245,30 @@ function StatItem({ icon, label, value, hint }: { icon: React.ReactNode; label: 
 }
 
 function CourseCard({ state }: { state: CourseState }) {
-  const { status, nextLesson, pct, done, total } = state;
-  const cta =
-    status === "completed" ? "Revisar" : status === "in-progress" ? "Continuar" : "Começar";
-  const targetLessonId = nextLesson?.id;
+  const { status, firstLesson, coverUrl, totalDurationSecs, pct, done, total } = state;
+  const mediaStatus: MediaCardStatus =
+    status === "completed" ? "done" : status === "in-progress" ? "in-progress" : "new";
+  const thumb = coverUrl ?? (firstLesson ? videoThumbnailUrl(firstLesson.video_provider, firstLesson.video_ref) : null);
+  const thumbHQ = coverUrl ? null : firstLesson ? videoThumbnailUrlHQ(firstLesson.video_provider, firstLesson.video_ref) : null;
+  const targetLessonId = state.nextLesson?.id;
 
   return (
-    <Card className="group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-24 bg-brand-gradient">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.2),transparent_70%)]" />
-        <div className="absolute right-3 top-3">
-          {status === "completed" && (
-            <Badge className="border-0 bg-[color:var(--color-success)] text-white">
-              <CheckCircle2 className="mr-1 h-3 w-3" />
-              Concluído
-            </Badge>
-          )}
-          {status === "not-started" && (
-            <Badge className="border-0 bg-white/90 text-[color:var(--color-brand)]">
-              <Sparkles className="mr-1 h-3 w-3" />
-              Novo
-            </Badge>
-          )}
-          {status === "in-progress" && (
-            <Badge className="border-0 bg-white/90 text-[color:var(--color-brand)]">
-              <Clock className="mr-1 h-3 w-3" />
-              Em andamento
-            </Badge>
-          )}
-        </div>
-      </div>
-      <CardContent className="pt-4">
-        <h3 className="line-clamp-1 text-base font-bold">{state.title}</h3>
-        <p className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm text-muted-foreground">
-          {state.description}
-        </p>
-
-        {status === "in-progress" && nextLesson && (
-          <div className="mt-3 rounded-md border border-border/60 bg-muted/40 px-2.5 py-1.5 text-xs">
-            <span className="text-muted-foreground">Próxima: </span>
-            <span className="font-medium">{nextLesson.title}</span>
-          </div>
-        )}
-
-        <div className="mt-4">
-          <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {done}/{total} aulas
-            </span>
-            <span>{pct}%</span>
-          </div>
-          <Progress value={pct} />
-        </div>
-
-        <Button
-          className="mt-4 w-full"
-          variant={status === "in-progress" ? "default" : "outline"}
-          asChild
-        >
-          {targetLessonId ? (
-            <Link to="/app/aulas/$lessonId" params={{ lessonId: targetLessonId }}>
-              {cta}
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          ) : (
-            <Link to="/app/cursos/$courseId" params={{ courseId: state.id }}>
-              {cta}
-            </Link>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="space-y-2">
+      <MediaCard
+        title={state.title}
+        thumbnailUrl={thumb}
+        thumbnailUrlHQ={thumbHQ}
+        durationSeconds={totalDurationSecs || undefined}
+        status={mediaStatus}
+        hint={total ? `${done}/${total} aulas` : undefined}
+        linkProps={
+          targetLessonId
+            ? { to: "/app/aulas/$lessonId", params: { lessonId: targetLessonId } }
+            : { to: "/app/cursos/$courseId", params: { courseId: state.id } }
+        }
+      />
+      {total > 0 && <Progress value={pct} className="h-1" />}
+    </div>
   );
 }
+

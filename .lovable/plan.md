@@ -1,81 +1,64 @@
+# Cards com thumbnail de vídeo
 
-# Melhorias de UX/UI da Área do Aluno
+Padronizar as listagens de **cursos** e **aulas** com um card visual estilo galeria: thumbnail 16:9 grande, badge de duração no canto inferior direito, título abaixo e linha de metadados (duração + status).
 
-Foco: transformar `/app` (home logada) e a jornada Curso → Aula em algo mais motivador, claro e "premium", mantendo a identidade REMAX (azul + vermelho, tipografia Manrope/Inter já configurada).
+## Como o thumbnail é obtido
 
-## Diagnóstico atual
+Helper puro em `src/lib/video-thumbnail.ts`, sem chamadas de rede:
 
-A tela `/app` hoje entrega:
-- Saudação genérica + 3 stat cards pequenos
-- Grid de cursos igual ao catálogo (redundante com `/app/cursos`)
-- "Continuar estudando" é só um botão pequeno, sem contexto da aula
-- Sem senso de progressão global, sem próxima aula sugerida, sem indicação do que fazer agora
-- Cards de curso todos iguais (mesmo gradiente), sem hierarquia entre "em andamento", "não iniciado" e "concluído"
+- **YouTube** (`video_provider: "youtube"`): `https://i.ytimg.com/vi/{id}/hqdefault.jpg` (usa `maxresdefault` como fonte primária com fallback `onError` para `hqdefault`).
+- **Vimeo** (`video_provider: "vimeo"`): sem CDN pública sem chamar API; usa fallback (gradient da marca com título) — evita adicionar server function agora.
+- **URL genérica**: fallback gradient.
+- Extração de ID: regex para `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/embed/`, e ID puro.
 
-Resultado: o aluno entra e não sabe onde clicar primeiro.
+**Para cursos:** thumbnail = `cover_url` do curso se existir; senão, thumbnail da **primeira aula publicada** do curso.
 
-## Direção do redesign
+## Componentes novos
 
-Princípio: **"o que eu faço agora?" precisa ser respondido em 1 segundo.**
+`src/components/media-card.tsx` — card reutilizável:
 
-### 1. Hero "Continue de onde parou" (peça principal)
-Substitui o card pequeno atual por um bloco largo no topo, abaixo da saudação:
-- Thumbnail/gradient do curso + nome do curso + nome da próxima aula
-- Barra de progresso do curso + "faltam X aulas"
-- Botão primário grande "Retomar aula" (vermelho REMAX)
-- Se o usuário nunca assistiu nada → variante "Comece por aqui" apontando para a 1ª aula do 1º curso publicado
+```
+┌─────────────────────────┐
+│                         │  ← 16:9 thumbnail (aspect-video)
+│      [thumbnail]        │     rounded-xl overflow-hidden
+│                    ⏱5m39s│    badge duração bottom-right
+└─────────────────────────┘
+Título da aula/curso        ← font-semibold, 1 linha, truncate
+5m 39s · Em andamento       ← text-xs text-muted-foreground
+```
 
-### 2. Stat strip enxuta
-Redesenhar os 3 stat cards como uma faixa horizontal compacta:
-- Aulas concluídas / total
-- Cursos em andamento
-- Tempo total assistido (soma de `percent × duration`)
-Com micro-ícones e números grandes, sem "cards" pesados.
+Props: `thumbnailUrl`, `fallbackTitle`, `durationSeconds`, `title`, `status` (`"done" | "in-progress" | "not-started" | "locked" | "new"`), `href`, `disabled`.
 
-### 3. Trilha "Meus cursos" com estados
-Grid de cursos, mas cada card ganha estado visual distinto:
-- **Em andamento**: barra de progresso destacada + "Continuar" + nome da próxima aula em pequeno
-- **Não iniciado**: badge "Novo" + "Começar"
-- **Concluído**: check verde + "Revisar" + selo discreto
-Ordenação: em andamento primeiro, depois não iniciados, depois concluídos.
+Status vira chip colorido inline:
+- `done` → check verde + "Concluída/Concluído"
+- `in-progress` → dot azul + "Em andamento" (+ `pct%` quando aula)
+- `not-started` / `new` → dot cinza + "Nova"
+- `locked` → cadeado + "Bloqueada" (opacity-60, sem link)
 
-### 4. Melhorias na página do curso (`/app/cursos/$courseId`)
-- Hero mantém gradiente, mas adiciona: total de aulas, duração total, % concluído em números grandes
-- Botão CTA "Continuar de onde parou" no hero (pula direto para a próxima aula disponível)
-- Lista de aulas: estados atuais (done/available/locked) ganham micro-interações (hover eleva, done com check animado)
-- Módulos colapsáveis quando o curso tem 3+ módulos
+## Aplicação
 
-### 5. Melhorias na página da aula (`/app/aulas/$lessonId`)
-- Após concluir: card de "Próxima aula" com auto-sugestão + botão "Ir para próxima"
-- Sidebar/lista compacta das aulas do módulo atual (contexto), sem precisar voltar
-- Breadcrumb: Curso › Módulo › Aula
+**1. Home `/app` (`src/routes/_authenticated/app/index.tsx`)**
+Substitui `CourseCard` atual pelo `MediaCard`. Mantém `ContinueHero` e `StatStrip` como estão. Ordem in-progress → not-started → completed preservada. Barra de progresso do curso permanece abaixo do card (fina, 2px).
 
-### 6. Polimento visual transversal
-- Cards com `rounded-2xl`, sombra suave em hover, transição consistente
-- Skeleton loaders no lugar dos "Carregando…" atuais
-- Empty states ilustrados (sem cursos / sem progresso) em vez de texto seco
-- Micro-animações com framer-motion nos cards de curso e no hero de "continuar"
+**2. Catálogo `/app/cursos` (`src/routes/_authenticated/app/cursos/index.tsx`)**
+Grid `md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4` de `MediaCard`.
 
-## Escopo técnico (resumo)
+**3. Detalhe do curso `/app/cursos/$courseId.tsx`**
+Mantém hero atual. Substitui a lista vertical de aulas por **grid de MediaCards** agrupado por módulo (título do módulo como section header). Aulas bloqueadas aparecem no grid mas com `disabled`.
 
-Arquivos afetados:
-- `src/routes/_authenticated/app/index.tsx` — reestrutura completa (hero + strip + grid com estados)
-- `src/routes/_authenticated/app/cursos/$courseId.tsx` — CTA "continuar" + stats no hero + colapso de módulos
-- `src/routes/_authenticated/app/aulas/$lessonId.tsx` — próxima aula + lista lateral do módulo
-- `src/lib/courses.ts` — helper `getNextLesson(userId, courseId?)` para calcular próxima aula disponível
-- Novos componentes: `ContinueHero`, `StatStrip`, `CourseCardWithState`, `NextLessonCard`, `LessonSkeleton`
-- `framer-motion` (verificar se já está instalado; adicionar se não)
+## Detalhes técnicos
 
-Sem mudanças de schema, sem mudanças em auth, sem mudanças no admin.
+- Novo arquivo: `src/lib/video-thumbnail.ts` (função pura, sem I/O).
+- Novo componente: `src/components/media-card.tsx`.
+- Editados: `app/index.tsx`, `app/cursos/index.tsx`, `app/cursos/$courseId.tsx`.
+- Nada muda no schema, RLS, ou server functions.
+- Sem novas dependências.
+- `aspect-video` + `object-cover` + `loading="lazy"` nas imagens.
 
-## Fora de escopo (posso incluir depois se você quiser)
+## Fora do escopo
 
-- Gamificação (badges, streak, ranking)
-- Notificações / lembretes por e-mail
-- Certificado de conclusão
-- Comentários/dúvidas por aula
-- Busca no catálogo
+- Vimeo com thumbnail real (precisa oEmbed via server fn — pode virar próxima iteração).
+- Upload manual de capa por aula.
+- Animações framer-motion (mantém as transições Tailwind).
 
----
-
-Quer que eu vá com esse plano completo, ou prefere que eu foque só na **etapa 1–3 (home `/app`)** primeiro para você validar o direcionamento visual antes de mexer no restante?
+Aprovado?
