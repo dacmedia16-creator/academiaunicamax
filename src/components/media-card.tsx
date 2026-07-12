@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { LinkProps } from "@tanstack/react-router";
+type AnyLinkProps = React.ComponentProps<typeof Link>;
 import { CheckCircle2, Clock, Lock, PlayCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
