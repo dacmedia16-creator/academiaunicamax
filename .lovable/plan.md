@@ -1,25 +1,16 @@
-# Corrigir vídeos do YouTube que não abrem
+## Objetivo
+Usar a imagem enviada como banner principal da landing page (`/`).
 
-## Problema
-No player, quando o campo "ID ou URL do vídeo" recebe uma URL completa (ex.: `https://www.youtube.com/watch?v=ABC123` ou `https://youtu.be/ABC123`), o código atual apenas remove caracteres não-alfanuméricos, gerando um "ID" inválido como `httpswwwyoutubecomwatchvABC123`. O iframe aponta para uma URL quebrada e o vídeo não carrega.
+## Mudanças
 
-O mesmo tipo de problema pode ocorrer no Vimeo se o admin colar a URL completa em vez do ID numérico.
+1. **Enviar a imagem para Lovable Assets** (sem duplicar binário no repo):
+   - `lovable-assets create --file /mnt/user-uploads/ChatGPT_Image_12_de_jul._de_2026_16_27_45.png --filename academia-remax-banner.png > src/assets/academia-remax-banner.png.asset.json`
 
-## O que fazer
-
-1. Em `src/routes/_authenticated/app/aulas/$lessonId.tsx`, dentro de `VideoEmbed`, extrair o ID real do YouTube a partir de qualquer um destes formatos aceitos:
-   - ID puro (`ABC123_-xy`)
-   - `https://www.youtube.com/watch?v=ID`
-   - `https://youtu.be/ID`
-   - `https://www.youtube.com/embed/ID`
-   - `https://www.youtube.com/shorts/ID`
-   
-   Se não for possível extrair um ID válido, mostrar um aviso amigável ("Vídeo indisponível — verifique o link cadastrado") em vez de renderizar um iframe quebrado.
-
-2. Fazer o mesmo para Vimeo: aceitar tanto o ID numérico quanto URLs `https://vimeo.com/123456789` ou `https://player.vimeo.com/video/123456789`.
-
-3. Atualizar o placeholder do campo em `src/routes/_authenticated/admin/cursos/$courseId.tsx` para deixar claro que aceita tanto ID quanto URL completa (ex.: "ID ou URL (YouTube/Vimeo)").
+2. **Editar `src/routes/index.tsx`** — seção hero:
+   - Substituir o card decorativo à direita (o `<div>` com `BrandMark`, "Ao vivo" e o `PlayCircle`) por um `<img>` renderizando o banner enviado, com `rounded-2xl`, sombra e `object-cover`.
+   - Manter `alt` descritivo ("Academia RE/MAX — Treinamento que transforma").
+   - Manter o restante do hero (título, subtítulo, botões, chips com ícones) intacto.
 
 ## Fora do escopo
-- Não alterar o schema do banco nem a forma de armazenar `video_ref` (continua string livre).
-- Não mudar o fluxo de progresso/heurística do YouTube.
+- Não alterar textos, cores, tokens, header, footer ou outras rotas.
+- Não trocar o `og:image` (a imagem é enviada como asset comum do hero).
