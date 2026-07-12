@@ -38,16 +38,47 @@ function CourseDetail() {
 
   if (!course) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
+  const totalDuration = ordered.reduce((s, l) => s + (l.duration_seconds || 0), 0);
+  const totalMinutes = Math.round(totalDuration / 60);
+  const nextLesson = ordered.find((l) => !progressMap.get(l.id)?.completed) ?? null;
+  const isComplete = ordered.length > 0 && doneCount === ordered.length;
+
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl bg-brand-gradient p-6 text-white shadow-lg md:p-10">
-        <h1 className="text-2xl font-extrabold md:text-4xl">{course.title}</h1>
-        <p className="mt-2 max-w-3xl text-sm text-white/90 md:text-base">{course.description}</p>
-        <div className="mt-6 max-w-md">
-          <div className="mb-1 flex items-center justify-between text-xs">
-            <span>{doneCount}/{ordered.length} aulas concluídas</span><span>{pct}%</span>
+      <div className="relative overflow-hidden rounded-2xl bg-brand-gradient p-6 text-white shadow-lg md:p-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_60%)]" />
+        <div className="relative">
+          <h1 className="text-2xl font-extrabold md:text-4xl">{course.title}</h1>
+          <p className="mt-2 max-w-3xl text-sm text-white/90 md:text-base">{course.description}</p>
+
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-white/85">
+            <span className="inline-flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5" />{ordered.length} aulas</span>
+            {totalMinutes > 0 && <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{totalMinutes} min de conteúdo</span>}
+            <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" />{doneCount} concluídas</span>
           </div>
-          <Progress value={pct} className="bg-white/20" />
+
+          <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-md flex-1">
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span>{pct}% concluído</span>
+                <span>{doneCount}/{ordered.length}</span>
+              </div>
+              <Progress value={pct} className="h-2 bg-white/20" />
+            </div>
+            {nextLesson && (
+              <Button size="lg" className="bg-[color:var(--color-brand-red)] font-semibold text-white shadow-md hover:brightness-110" asChild>
+                <Link to="/app/aulas/$lessonId" params={{ lessonId: nextLesson.id }}>
+                  {doneCount === 0 ? "Começar curso" : "Continuar"}
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {isComplete && (
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+                <CheckCircle2 className="h-4 w-4" /> Curso concluído
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
