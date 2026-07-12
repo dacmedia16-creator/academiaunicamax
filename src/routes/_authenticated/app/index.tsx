@@ -17,6 +17,9 @@ type CourseState = {
   id: string;
   title: string;
   description: string | null;
+  coverUrl: string | null;
+  firstLesson: Lesson | null;
+  totalDurationSecs: number;
   total: number;
   done: number;
   pct: number;
