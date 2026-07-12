@@ -4,9 +4,10 @@ import { fetchCourses, fetchMyProgress, fetchCourseTree, orderPublishedLessons, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, CheckCircle2, PlayCircle, Clock, ArrowRight, Sparkles, Trophy } from "lucide-react";
+import { BookOpen, CheckCircle2, PlayCircle, ArrowRight, Sparkles, Trophy } from "lucide-react";
 import { useUser } from "@/hooks/use-auth";
+import { MediaCard, type MediaCardStatus } from "@/components/media-card";
+import { videoThumbnailUrl, videoThumbnailUrlHQ } from "@/lib/video-thumbnail";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: HomePage,
