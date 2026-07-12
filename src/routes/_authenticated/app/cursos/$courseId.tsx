@@ -82,48 +82,149 @@ function CourseDetail() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        {tree?.map((m) => (
-          <div key={m.id}>
-            <h2 className="mb-3 text-lg font-bold">{m.title}</h2>
-            {m.description && <p className="mb-3 text-sm text-muted-foreground">{m.description}</p>}
-            <div className="space-y-2">
-              {m.lessons.filter((l) => l.is_published).map((l) => {
-                const s = stateFor(l);
-                const p = progressMap.get(l.id);
-                const disabled = s === "locked";
-                const inner = (
-                  <Card className={cn("transition", disabled ? "opacity-60" : "hover:shadow-md")}>
-                    <CardContent className="flex items-center gap-4 py-4">
-                      <div className={cn("grid h-10 w-10 place-items-center rounded-full",
-                        s === "done" && "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]",
-                        s === "available" && "bg-[color:var(--color-brand)]/10 text-[color:var(--color-brand)]",
-                        s === "locked" && "bg-muted text-muted-foreground",
-                      )}>
-                        {s === "done" ? <CheckCircle2 className="h-5 w-5" /> : s === "locked" ? <Lock className="h-4 w-4" /> : <PlayCircle className="h-5 w-5" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-semibold">{l.title}</div>
-                        <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{fmtDuration(l.duration_seconds)}</span>
-                          {p && !p.completed && p.percent > 0 && <span>{Math.round(p.percent)}% assistido</span>}
-                          <span className="capitalize">{s === "done" ? "Concluída" : s === "locked" ? "Bloqueada" : "Disponível"}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-                return disabled ? (
-                  <div key={l.id} aria-disabled="true" title="Conclua a aula anterior para desbloquear">{inner}</div>
-                ) : (
-                  <Link key={l.id} to="/app/aulas/$lessonId" params={{ lessonId: l.id }}>{inner}</Link>
-                );
-              })}
+      <div className="space-y-8">
+        {tree?.map((m) => {
+          const published = m.lessons.filter((l) => l.is_published);
+          return (
+            <div key={m.id}>
+              <h2 className="mb-1 text-lg font-bold">{m.title}</h2>
+              {m.description && <p className="mb-4 text-sm text-muted-foreground">{m.description}</p>}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {published.map((l, idx) => {
+                  const s = stateFor(l);
+                  const p = progressMap.get(l.id);
+                  return <LessonCard key={l.id} lesson={l} index={idx} state={s} progress={p?.percent ?? 0} />;
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {tree && tree.length === 0 && <p className="text-sm text-muted-foreground">Este curso ainda não tem módulos publicados.</p>}
       </div>
     </div>
   );
 }
+
+type LessonState = "done" | "available" | "locked";
+
+function LessonCard({
+  lesson,
+  index,
+  state,
+  progress,
+}: {
+  lesson: Lesson;
+  index: number;
+  state: LessonState;
+  progress: number;
+}) {
+  const inProgress = state === "available" && progress > 0 && progress < 100;
+  const locked = state === "locked";
+  const done = state === "done";
+
+  const bannerClass = cn(
+    "relative h-24 overflow-hidden",
+    done && "bg-[color:var(--color-success)]/15",
+    !done && !locked && "bg-brand-gradient",
+    locked && "bg-muted",
+  );
+
+  const iconClass = cn(
+    "grid h-12 w-12 place-items-center rounded-full backdrop-blur transition-transform group-hover:scale-110",
+    done && "bg-[color:var(--color-success)] text-white",
+    !done && !locked && "bg-white/25 text-white",
+    locked && "bg-background/70 text-muted-foreground",
+  );
+
+  const badge = done ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-success)] px-2 py-0.5 text-[11px] font-semibold text-white">
+      <CheckCircle2 className="h-3 w-3" /> Concluída
+    </span>
+  ) : locked ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-background/80 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground backdrop-blur">
+      <Lock className="h-3 w-3" /> Bloqueada
+    </span>
+  ) : inProgress ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-brand)]">
+      <Clock className="h-3 w-3" /> Em andamento
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--color-brand)]">
+      <PlayCircle className="h-3 w-3" /> Disponível
+    </span>
+  );
+
+  const ctaLabel = done ? "Revisar" : inProgress ? "Continuar" : locked ? "Bloqueada" : "Assistir";
+
+  const inner = (
+    <Card
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-2xl border-border/60 p-0 transition",
+        locked ? "opacity-60" : "hover:-translate-y-0.5 hover:shadow-lg",
+      )}
+    >
+      <div className={bannerClass}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.25),transparent_70%)]" />
+        <div className="absolute right-3 top-3">{badge}</div>
+        <div className="absolute inset-0 grid place-items-center">
+          <div className={iconClass}>
+            {done ? <CheckCircle2 className="h-6 w-6" /> : locked ? <Lock className="h-5 w-5" /> : <PlayCircle className="h-6 w-6" />}
+          </div>
+        </div>
+      </div>
+
+      <CardContent className="flex flex-1 flex-col p-4">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Aula {String(index + 1).padStart(2, "0")}
+        </div>
+        <h3 className="mt-1 line-clamp-2 min-h-[2.75rem] text-base font-bold leading-snug">{lesson.title}</h3>
+
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          <span>{fmtDuration(lesson.duration_seconds)}</span>
+        </div>
+
+        {inProgress && (
+          <div className="mt-3">
+            <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{Math.round(progress)}% assistido</span>
+            </div>
+            <Progress value={progress} className="h-1.5" />
+          </div>
+        )}
+
+        <Button
+          className="mt-4 w-full"
+          variant={done ? "outline" : "default"}
+          disabled={locked}
+          asChild={!locked}
+        >
+          {locked ? (
+            <span>
+              <Lock className="mr-1 h-4 w-4" /> {ctaLabel}
+            </span>
+          ) : (
+            <span className="inline-flex items-center justify-center">
+              {ctaLabel}
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </span>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  if (locked) {
+    return (
+      <div aria-disabled="true" title="Conclua a aula anterior para desbloquear">
+        {inner}
+      </div>
+    );
+  }
+  return (
+    <Link to="/app/aulas/$lessonId" params={{ lessonId: lesson.id }} className="block h-full">
+      {inner}
+    </Link>
+  );
+}
+
