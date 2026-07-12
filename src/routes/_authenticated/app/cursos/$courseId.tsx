@@ -11,14 +11,6 @@ export const Route = createFileRoute("/_authenticated/app/cursos/$courseId")({
   component: CourseDetail,
 });
 
-export const Route = createFileRoute("/_authenticated/app/cursos/$courseId")({
-  component: CourseDetail,
-});
-
-function fmtDuration(s: number) {
-  const m = Math.floor(s / 60), sec = s % 60;
-  return `${m}min${sec ? ` ${sec}s` : ""}`;
-}
 
 function CourseDetail() {
   const { courseId } = Route.useParams();
