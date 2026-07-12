@@ -1,8 +1,9 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { SiteHeader, BrandMark } from "@/components/site-header";
-import { BookOpen, CheckCircle2, PlayCircle, ShieldCheck } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
+import { BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import bannerAsset from "@/assets/academia-remax-banner.png.asset.json";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
