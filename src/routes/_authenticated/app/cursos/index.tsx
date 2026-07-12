@@ -56,7 +56,7 @@ function CatalogPage() {
               durationSeconds={totalSecs || undefined}
               status={status}
               hint={total ? `${done}/${total} aulas` : undefined}
-              linkProps={{ to: "/app/cursos/$courseId", params: { courseId: c.id } } as any}
+              linkProps={{ to: "/app/cursos/$courseId", params: { courseId: c.id } }}
             />
           );
         })}
