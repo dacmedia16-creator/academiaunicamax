@@ -5,6 +5,8 @@ import { BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import bannerAsset from "@/assets/academia-remax-banner.png.asset.json";
 
+const OG_IMAGE = "https://academiaunicamax.lovable.app/__l5e/assets-v1/1dc23e01-e660-455d-9cdb-b52a7484c596/academia-remax-logo.png";
+
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     // If already signed in on client, jump into the app
@@ -13,6 +15,15 @@ export const Route = createFileRoute("/")({
       if (data.session) throw redirect({ to: "/app" });
     }
   },
+  head: () => ({
+    meta: [
+      { property: "og:url", content: "https://academiaunicamax.lovable.app/" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:alt", content: "Academia RE/MAX — Plataforma de treinamentos" },
+      { name: "twitter:image", content: OG_IMAGE },
+    ],
+    links: [{ rel: "canonical", href: "https://academiaunicamax.lovable.app/" }],
+  }),
   component: LandingPage,
 });
 
