@@ -248,13 +248,61 @@ function VideoEmbed({ lesson, onTimeUpdate }: { lesson: Lesson; onTimeUpdate: (c
     );
   }
   if (lesson.video_provider === "vimeo") {
-    // video_ref is expected to be the numeric Vimeo id
-    const id = String(lesson.video_ref).replace(/[^0-9]/g, "");
+    const id = extractVimeoId(lesson.video_ref);
+    if (!id) return <VideoUnavailable />;
     const src = `https://player.vimeo.com/video/${id}?api=1`;
     return <iframe ref={iframeRef} src={src} className="h-full w-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={lesson.title} />;
   }
-  // youtube: video_ref is the video id
-  const id = String(lesson.video_ref).replace(/[^A-Za-z0-9_\-]/g, "");
+  const id = extractYouTubeId(lesson.video_ref);
+  if (!id) return <VideoUnavailable />;
   const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
   return <iframe src={src} className="h-full w-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={lesson.title} />;
 }
+
+function VideoUnavailable() {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-black p-6 text-center text-sm text-white/80">
+      Vídeo indisponível — verifique o link cadastrado para esta aula.
+    </div>
+  );
+}
+
+function extractYouTubeId(ref: string): string | null {
+  const raw = (ref ?? "").trim();
+  if (!raw) return null;
+  // Try URL parsing
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") {
+      const id = u.pathname.slice(1).split("/")[0];
+      return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+    }
+    if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
+      const v = u.searchParams.get("v");
+      if (v && /^[A-Za-z0-9_-]{6,}$/.test(v)) return v;
+      const parts = u.pathname.split("/").filter(Boolean);
+      const i = parts.findIndex((p) => p === "embed" || p === "shorts" || p === "v");
+      if (i >= 0 && parts[i + 1] && /^[A-Za-z0-9_-]{6,}$/.test(parts[i + 1])) return parts[i + 1];
+    }
+  } catch {}
+  // Bare id
+  if (/^[A-Za-z0-9_-]{6,}$/.test(raw)) return raw;
+  return null;
+}
+
+function extractVimeoId(ref: string): string | null {
+  const raw = (ref ?? "").trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return raw;
+  try {
+    const u = new URL(raw);
+    const parts = u.pathname.split("/").filter(Boolean);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (/^\d+$/.test(parts[i])) return parts[i];
+    }
+  } catch {}
+  const m = raw.match(/(\d{6,})/);
+  return m ? m[1] : null;
+}
+

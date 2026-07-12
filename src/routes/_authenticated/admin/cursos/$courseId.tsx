@@ -171,7 +171,7 @@ function EditCourse() {
                     <SelectItem value="url">URL direta</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input name="vref" placeholder="ID ou URL do vídeo" required />
+                <Input name="vref" placeholder="ID ou URL (YouTube/Vimeo)" required />
                 <Input name="dur" type="number" min={0} placeholder="Duração (s)" />
                 <Button type="submit">Adicionar aula</Button>
                 <Input name="ldesc" placeholder="Descrição (opcional)" className="sm:col-span-6" />
