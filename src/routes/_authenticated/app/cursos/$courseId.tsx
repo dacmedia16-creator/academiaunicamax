@@ -1,11 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCourse, fetchCourseTree, fetchMyProgress, orderPublishedLessons, type Lesson } from "@/lib/courses";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Lock, PlayCircle, Clock, ArrowRight, BookOpen } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { CheckCircle2, Clock, ArrowRight, BookOpen } from "lucide-react";
+import { MediaCard, type MediaCardStatus } from "@/components/media-card";
+import { videoThumbnailUrl, videoThumbnailUrlHQ } from "@/lib/video-thumbnail";
+
+export const Route = createFileRoute("/_authenticated/app/cursos/$courseId")({
+  component: CourseDetail,
+});
 
 export const Route = createFileRoute("/_authenticated/app/cursos/$courseId")({
   component: CourseDetail,
