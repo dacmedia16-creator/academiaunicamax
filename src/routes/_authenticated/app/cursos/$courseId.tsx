@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchCourse, fetchCourseTree, fetchMyProgress, orderPublishedLessons, type Lesson } from "@/lib/courses";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Lock, PlayCircle, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, Lock, PlayCircle, Clock, ArrowRight, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/cursos/$courseId")({
