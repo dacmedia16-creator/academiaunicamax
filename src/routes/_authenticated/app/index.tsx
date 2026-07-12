@@ -58,7 +58,12 @@ function HomePage() {
     );
     const status: CourseState["status"] =
       total > 0 && done === total ? "completed" : done > 0 ? "in-progress" : "not-started";
-    return { id: c.id, title: c.title, description: c.description, total, done, pct, nextLesson, lastWatchedAt, status };
+    return {
+      id: c.id, title: c.title, description: c.description,
+      coverUrl: c.cover_url, firstLesson: ordered[0] ?? null,
+      totalDurationSecs: ordered.reduce((s, l) => s + (l.duration_seconds || 0), 0),
+      total, done, pct, nextLesson, lastWatchedAt, status,
+    };
   });
 
   const totalLessons = states.reduce((s, c) => s + c.total, 0);
