@@ -9,7 +9,7 @@ import logoAsset from "@/assets/academia-remax-logo.png.asset.json";
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link to="/" className="flex items-center gap-2">
-      <img src={logoAsset.url} alt="Academia RE/MAX" className="h-10 w-10 object-contain" />
+      <img src={logoAsset.url} alt="Academia RE/MAX" className="h-10 w-10 rounded-full object-contain" />
 
       {!compact && (
         <div className="leading-tight">
