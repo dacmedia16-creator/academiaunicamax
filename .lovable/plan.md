@@ -1,16 +1,10 @@
 ## Objetivo
-Usar a imagem enviada como banner principal da landing page (`/`).
+Trocar o quadrado "R" do logo no header pela imagem do logo Academia RE/MAX enviada.
 
 ## Mudanças
-
-1. **Enviar a imagem para Lovable Assets** (sem duplicar binário no repo):
-   - `lovable-assets create --file /mnt/user-uploads/ChatGPT_Image_12_de_jul._de_2026_16_27_45.png --filename academia-remax-banner.png > src/assets/academia-remax-banner.png.asset.json`
-
-2. **Editar `src/routes/index.tsx`** — seção hero:
-   - Substituir o card decorativo à direita (o `<div>` com `BrandMark`, "Ao vivo" e o `PlayCircle`) por um `<img>` renderizando o banner enviado, com `rounded-2xl`, sombra e `object-cover`.
-   - Manter `alt` descritivo ("Academia RE/MAX — Treinamento que transforma").
-   - Manter o restante do hero (título, subtítulo, botões, chips com ícones) intacto.
+1. Upload da imagem para Lovable Assets: `src/assets/academia-remax-logo.png.asset.json`.
+2. Em `src/components/site-header.tsx` (`BrandMark`): substituir o `<div>` com "R" (linhas 11–13) por um `<img>` do logo com `h-10 w-10 object-contain`, `alt="Academia RE/MAX"`. O texto ao lado ("RE/MAX Academy / Treinamentos") permanece igual.
 
 ## Fora do escopo
-- Não alterar textos, cores, tokens, header, footer ou outras rotas.
-- Não trocar o `og:image` (a imagem é enviada como asset comum do hero).
+- Não alterar o texto do brand, nav, botões ou outras rotas.
+- Não trocar favicon nem og:image.
