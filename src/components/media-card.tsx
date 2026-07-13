@@ -146,8 +146,8 @@ export function MediaCard(props: MediaCardProps) {
     <div className={cn("group block", disabled && "pointer-events-none opacity-60")}>
       <Thumbnail {...props} />
       <div className="mt-2.5 space-y-1">
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug">{title}</h3>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+        <h3 className="line-clamp-2 min-h-[2.25rem] text-sm font-semibold leading-snug sm:min-h-[2.5rem]">{title}</h3>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-tight text-muted-foreground">
           {duration && <span>{duration}</span>}
           {duration && <span aria-hidden>·</span>}
           <StatusBadge status={status} />
