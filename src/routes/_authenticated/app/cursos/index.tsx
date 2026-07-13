@@ -31,7 +31,7 @@ function CatalogPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold md:text-3xl">Catálogo de cursos</h1>
+        <h1 className="text-xl font-extrabold sm:text-2xl md:text-3xl">Catálogo de cursos</h1>
         <p className="text-sm text-muted-foreground">Escolha um curso para começar ou continuar.</p>
       </div>
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}

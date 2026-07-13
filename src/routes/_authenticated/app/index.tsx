@@ -92,7 +92,7 @@ function HomePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-extrabold md:text-4xl">
+        <h1 className="text-2xl font-extrabold sm:text-3xl md:text-4xl">
           Olá{capitalized ? `, ${capitalized}` : ""}!
         </h1>
         <p className="mt-1 text-muted-foreground">
@@ -134,7 +134,7 @@ function ContinueHero({ state }: { state: CourseState }) {
   const label = isNew ? "Comece por aqui" : "Continue de onde parou";
   return (
     <Card className="overflow-hidden border-0 shadow-lg">
-      <div className="relative bg-brand-gradient p-6 text-white md:p-8">
+      <div className="relative bg-brand-gradient p-5 text-white sm:p-6 md:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_60%)]" />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
@@ -142,7 +142,7 @@ function ContinueHero({ state }: { state: CourseState }) {
               {isNew ? <Sparkles className="h-3 w-3" /> : <PlayCircle className="h-3 w-3" />}
               {label}
             </div>
-            <h2 className="mt-3 truncate text-2xl font-extrabold md:text-3xl">{state.title}</h2>
+            <h2 className="mt-3 line-clamp-2 text-xl font-extrabold sm:text-2xl md:truncate md:text-3xl">{state.title}</h2>
             {target && (
               <p className="mt-1 line-clamp-1 text-sm text-white/90 md:text-base">
                 Próxima aula: <span className="font-semibold">{target.title}</span>
@@ -162,7 +162,7 @@ function ContinueHero({ state }: { state: CourseState }) {
             {target ? (
               <Button
                 size="lg"
-                className="bg-[color:var(--color-brand-red)] font-semibold text-white shadow-md hover:brightness-110"
+                className="w-full bg-[color:var(--color-brand-red)] font-semibold text-white shadow-md hover:brightness-110 sm:w-auto"
                 asChild
               >
                 <Link to="/app/aulas/$lessonId" params={{ lessonId: target.id }}>
@@ -171,7 +171,7 @@ function ContinueHero({ state }: { state: CourseState }) {
                 </Link>
               </Button>
             ) : (
-              <Button size="lg" variant="secondary" asChild>
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto" asChild>
                 <Link to="/app/cursos/$courseId" params={{ courseId: state.id }}>
                   Ver curso
                 </Link>
@@ -180,7 +180,7 @@ function ContinueHero({ state }: { state: CourseState }) {
             <Link
               to="/app/cursos/$courseId"
               params={{ courseId: state.id }}
-              className="text-xs text-white/80 hover:text-white hover:underline"
+              className="-my-2 py-2 text-center text-xs text-white/80 hover:text-white hover:underline md:text-right"
             >
               Ver módulos do curso
             </Link>
@@ -204,22 +204,22 @@ function StatStrip({
 }) {
   const pct = totalLessons ? Math.round((totalDone / totalLessons) * 100) : 0;
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
       <StatItem
         icon={<BookOpen className="h-4 w-4" />}
-        label="Cursos disponíveis"
+        label="Cursos"
         value={String(totalCourses)}
         hint={`${inProgress} em andamento`}
       />
       <StatItem
         icon={<CheckCircle2 className="h-4 w-4" />}
-        label="Aulas concluídas"
+        label="Aulas"
         value={`${totalDone}/${totalLessons || "–"}`}
         hint={`${pct}% do total`}
       />
       <StatItem
         icon={<Trophy className="h-4 w-4" />}
-        label="Progresso geral"
+        label="Progresso"
         value={`${pct}%`}
         hint={pct === 100 && totalLessons > 0 ? "Trilha completa!" : "Continue avançando"}
       />
@@ -230,14 +230,14 @@ function StatStrip({
 function StatItem({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint: string }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4 py-4">
-        <div className="grid h-10 w-10 place-items-center rounded-lg bg-accent text-[color:var(--color-brand)]">
+      <CardContent className="flex flex-col items-start gap-1 py-3 sm:flex-row sm:items-center sm:gap-4 sm:py-4">
+        <div className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-[color:var(--color-brand)] sm:h-10 sm:w-10">
           {icon}
         </div>
         <div className="min-w-0">
-          <div className="text-lg font-bold leading-tight">{value}</div>
-          <div className="text-xs text-muted-foreground">{label}</div>
-          <div className="text-[11px] text-muted-foreground/80">{hint}</div>
+          <div className="text-base font-bold leading-tight sm:text-lg">{value}</div>
+          <div className="text-[11px] text-muted-foreground sm:text-xs">{label}</div>
+          <div className="hidden text-[11px] text-muted-foreground/80 sm:block">{hint}</div>
         </div>
       </CardContent>
     </Card>
