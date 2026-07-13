@@ -60,18 +60,18 @@ function LessonPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <Button variant="ghost" size="sm" asChild>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <Button variant="ghost" size="sm" className="h-10 justify-start px-3" asChild>
           <Link to="/app/cursos/$courseId" params={{ courseId: lesson.modules.course_id }}>
             <ArrowLeft className="mr-1 h-4 w-4" />Voltar ao curso
           </Link>
         </Button>
-        <div className="text-xs text-muted-foreground">Aula {idx + 1} de {ordered.length}</div>
+        <div className="whitespace-nowrap text-[11px] text-muted-foreground sm:text-xs">Aula {idx + 1} de {ordered.length}</div>
       </div>
 
       <div>
-        <h1 className="text-2xl font-extrabold md:text-3xl">{lesson.title}</h1>
-        {lesson.description && <p className="mt-1 text-sm text-muted-foreground">{lesson.description}</p>}
+        <h1 className="line-clamp-2 text-xl font-extrabold sm:text-2xl md:text-3xl">{lesson.title}</h1>
+        {lesson.description && <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{lesson.description}</p>}
       </div>
 
       <Player lesson={lesson} onCompleted={() => {
@@ -81,12 +81,12 @@ function LessonPage() {
 
       {next && (
         <Card>
-          <CardContent className="flex flex-col items-start gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+          <CardContent className="flex flex-col items-stretch gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <div className="text-xs text-muted-foreground">Próxima aula</div>
-              <div className="font-semibold">{next.title}</div>
+              <div className="line-clamp-2 font-semibold">{next.title}</div>
             </div>
-            <Button asChild disabled={!nextUnlockedNow}>
+            <Button className="w-full sm:w-auto" asChild disabled={!nextUnlockedNow}>
               <Link to="/app/aulas/$lessonId" params={{ lessonId: next.id }}>
                 {nextUnlockedNow ? "Ir para a próxima" : "Conclua para desbloquear"}<ChevronRight className="ml-1 h-4 w-4" />
               </Link>
@@ -185,12 +185,12 @@ function Player({ lesson, onCompleted }: { lesson: Lesson; onCompleted: () => vo
       </div>
       {!supportsProgress && (
         <Card className="bg-accent/40">
-          <CardContent className="flex flex-col items-start gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardContent className="flex flex-col items-stretch gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm">
               Este provedor de vídeo não permite medir o progresso automaticamente com segurança.
               Ao terminar de assistir, marque a aula como concluída para desbloquear a próxima.
             </p>
-            <Button onClick={markComplete} disabled={done}>
+            <Button className="w-full sm:w-auto" onClick={markComplete} disabled={done}>
               <CheckCircle2 className="mr-1 h-4 w-4" />{done ? "Concluída" : "Marcar como concluída"}
             </Button>
           </CardContent>
