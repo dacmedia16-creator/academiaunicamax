@@ -14,8 +14,8 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
       <img src={logoAsset.url} alt="Academia RE/MAX" className="h-9 w-9 shrink-0 rounded-full object-contain sm:h-10 sm:w-10" />
       {!compact && (
         <div className="min-w-0 leading-tight">
-          <div className="truncate font-display text-sm font-extrabold tracking-tight sm:text-base">
-            REMAX <span className="text-[color:var(--color-brand-red)]">Academy</span>
+          <div className="whitespace-pre-line font-display text-sm font-extrabold tracking-tight sm:text-base">
+            REMAX&nbsp;{"\n"}Única Escolha&nbsp;<span className="text-[color:var(--color-brand-red)]">Academy</span>
           </div>
           <div className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:block">Treinamentos</div>
         </div>
