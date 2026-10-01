@@ -10,40 +10,29 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { useIsAdmin, useUser } from "@/hooks/use-auth";
+import { useIsPlatform } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin/cursos/")({
   component: AdminCourses,
 });
 
-async function fetchAdminCourses(isAdmin: boolean, userId: string | undefined) {
-  if (isAdmin) {
-    const { data, error } = await supabase.from("courses").select("*").order("sort_order");
-    if (error) throw error;
-    return data ?? [];
-  }
-  if (!userId) return [];
-  // Manager: only assigned courses
-  const { data: cm, error: e1 } = await supabase
-    .from("course_managers").select("course_id").eq("user_id", userId);
-  if (e1) throw e1;
-  const ids = (cm ?? []).map((r) => r.course_id);
-  if (ids.length === 0) return [];
-  const { data, error } = await supabase.from("courses").select("*").in("id", ids).order("sort_order");
+// Catálogo global: só a plataforma edita (RLS garante; a tela só esconde para os demais).
+async function fetchAdminCourses() {
+  const { data, error } = await supabase.from("courses").select("*").order("sort_order");
   if (error) throw error;
   return data ?? [];
 }
 
 function AdminCourses() {
   const qc = useQueryClient();
-  const user = useUser();
-  const isAdmin = useIsAdmin();
+  const isPlatform = useIsPlatform();
   const { data: courses } = useQuery({
-    queryKey: ["admin-courses", isAdmin, user?.id],
-    queryFn: () => fetchAdminCourses(!!isAdmin, user?.id),
-    enabled: isAdmin !== undefined && user !== undefined,
+    queryKey: ["admin-courses"],
+    queryFn: fetchAdminCourses,
+    enabled: isPlatform === true,
   });
   const [creating, setCreating] = useState(false);
+  if (isPlatform === false) return <p className="text-sm text-muted-foreground">Somente a plataforma edita o catálogo.</p>;
 
 
   async function createCourse(e: React.FormEvent<HTMLFormElement>) {

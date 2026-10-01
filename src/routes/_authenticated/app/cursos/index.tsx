@@ -45,8 +45,8 @@ function CatalogPage() {
           const status: MediaCardStatus =
             total > 0 && done === total ? "done" : done > 0 ? "in-progress" : "new";
           const firstLesson = ordered[0];
-          const thumb = c.cover_url ?? (firstLesson ? videoThumbnailUrl(firstLesson.video_provider, firstLesson.video_ref) : null);
-          const thumbHQ = c.cover_url ? null : firstLesson ? videoThumbnailUrlHQ(firstLesson.video_provider, firstLesson.video_ref) : null;
+          const thumb = c.cover_url ?? (firstLesson ? videoThumbnailUrl(firstLesson.video_provider, firstLesson.video_id) : null);
+          const thumbHQ = c.cover_url ? null : firstLesson ? videoThumbnailUrlHQ(firstLesson.video_provider, firstLesson.video_id) : null;
           return (
             <MediaCard
               key={c.id}

@@ -146,20 +146,34 @@ CREATE TABLE academia.modules (
 );
 CREATE INDEX academia_modules_course_idx ON academia.modules (course_id, sort_order);
 
--- Vídeo: somente Vimeo (conta única da MAX). ID numérico e, para vídeo "não listado", o hash h=.
+-- Vídeo atrás de um adaptador (VideoProvider no front). Provedor principal: Cloudflare Stream
+-- (decisão de Denis, 01/10). O banco guarda só provider + id do vídeo (+ hash opcional, ex.: Vimeo
+-- "não listado"). Trocar para Bunny/Panda = novo adaptador + UPDATE de provider/video_id, sem mudar telas.
+-- O token de reprodução (Stream signed URL) é gerado só no servidor; nunca fica no banco.
 CREATE TABLE academia.lessons (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id uuid NOT NULL REFERENCES academia.modules(id) ON DELETE CASCADE,
   title text NOT NULL,
   description text,
-  vimeo_video_id text NOT NULL DEFAULT '' CHECK (vimeo_video_id ~ '^[0-9]*$'),
-  vimeo_hash text CHECK (vimeo_hash IS NULL OR vimeo_hash ~ '^[0-9a-f]{6,20}$'),
+  video_provider text NOT NULL DEFAULT 'cloudflare_stream'
+    CHECK (video_provider IN ('cloudflare_stream', 'vimeo', 'bunny', 'panda')),
+  video_id text NOT NULL DEFAULT '' CHECK (video_id ~ '^[A-Za-z0-9_-]{0,64}$'),
+  video_hash text CHECK (video_hash IS NULL OR video_hash ~ '^[A-Za-z0-9]{4,40}$'),
   duration_seconds integer NOT NULL DEFAULT 0 CHECK (duration_seconds >= 0),
   sort_order integer NOT NULL DEFAULT 0,
   is_published boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX academia_lessons_module_idx ON academia.lessons (module_id, sort_order);
+
+-- Onde está o arquivo ORIGINAL (master) de cada aula, fora do provedor de vídeo (ex.: Google Drive
+-- ou R2 da MAX), para permitir migrar de provedor no futuro. Visível só para a plataforma.
+CREATE TABLE academia.lesson_masters (
+  lesson_id uuid PRIMARY KEY REFERENCES academia.lessons(id) ON DELETE CASCADE,
+  master_ref text NOT NULL CHECK (length(master_ref) BETWEEN 3 AND 1000),
+  checksum_sha256 text CHECK (checksum_sha256 IS NULL OR checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
 -- ============================================================================================
 -- Por agência e por usuário
@@ -254,6 +268,28 @@ CREATE POLICY progress_select ON academia.lesson_progress FOR SELECT TO authenti
   user_id = (SELECT auth.uid()) OR (SELECT academia.is_platform())
   OR organization_id = (SELECT academia.managed_org()));
 
+-- Masters (arquivos originais): só a plataforma.
+ALTER TABLE academia.lesson_masters ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON academia.lesson_masters TO authenticated;
+CREATE POLICY masters_all ON academia.lesson_masters FOR ALL TO authenticated
+  USING ((SELECT academia.is_platform())) WITH CHECK ((SELECT academia.is_platform()));
+
+-- Histórico próprio (decisão de Denis, 01/10): o ex-corretor desligado perde o catálogo
+-- (user_org = NULL), mas continua lendo o que já fez, com os títulos dos cursos/aulas.
+-- Só do próprio usuário; não expõe vídeo nem aulas não assistidas.
+CREATE FUNCTION academia.my_history() RETURNS TABLE (
+  course_id uuid, course_title text, lesson_id uuid, lesson_title text,
+  percent numeric, completed boolean, completed_at timestamptz, last_watched_at timestamptz)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT c.id, c.title, l.id, l.title, lp.percent, lp.completed, lp.completed_at, lp.last_watched_at
+  FROM academia.lesson_progress lp
+  JOIN academia.lessons l ON l.id = lp.lesson_id
+  JOIN academia.modules m ON m.id = l.module_id
+  JOIN academia.courses c ON c.id = m.course_id
+  WHERE lp.user_id = auth.uid()
+  ORDER BY lp.last_watched_at DESC
+$$;
+
 -- ============================================================================================
 -- Regras de negócio no servidor
 -- ============================================================================================
@@ -330,7 +366,7 @@ $$;
 -- Permissões das funções: nada para PUBLIC/anon.
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA academia FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION academia.current_org(), academia.current_role(), academia.is_platform(), academia.managed_org(),
-  academia.can_manage_org(uuid), academia.my_context(), academia.list_org_people(),
+  academia.can_manage_org(uuid), academia.my_context(), academia.list_org_people(), academia.my_history(),
   academia.is_lesson_unlocked(uuid), academia.save_progress(uuid, numeric, integer),
   academia.user_org(uuid), academia.user_role(uuid), academia.is_platform_admin(uuid),
   academia.legacy_org_id()

@@ -95,8 +95,8 @@ function CourseDetail() {
                   <MediaCard
                     key={l.id}
                     title={l.title}
-                    thumbnailUrl={videoThumbnailUrl(l.video_provider, l.video_ref)}
-                    thumbnailUrlHQ={videoThumbnailUrlHQ(l.video_provider, l.video_ref)}
+                    thumbnailUrl={videoThumbnailUrl(l.video_provider, l.video_id)}
+                    thumbnailUrlHQ={videoThumbnailUrlHQ(l.video_provider, l.video_id)}
                     durationSeconds={l.duration_seconds || undefined}
                     status={mediaStatus}
                     hint={hint}

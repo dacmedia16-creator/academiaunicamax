@@ -1,63 +1,58 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin, useUser } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { useAcademiaContext, useUser, ROLE_LABEL } from "@/hooks/use-auth";
+import { fetchMyHistory } from "@/lib/courses";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/perfil")({
   component: ProfilePage,
 });
 
+// Nome, papel e agência vêm do ADM MAX (fonte única). Aqui é só leitura + histórico próprio,
+// que continua disponível mesmo para quem foi desligado.
 function ProfilePage() {
   const user = useUser();
-  const isAdmin = useIsAdmin();
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle()
-      .then(({ data }) => setName(data?.full_name ?? ""));
-  }, [user?.id]);
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) return;
-    setLoading(true);
-    const { error } = await supabase.from("profiles").update({ full_name: name.trim() }).eq("id", user.id);
-    setLoading(false);
-    if (error) toast.error(error.message); else toast.success("Perfil atualizado");
-  }
+  const ctx = useAcademiaContext();
+  const { data: history } = useQuery({ queryKey: ["my-history", user?.id ?? "-"], queryFn: fetchMyHistory, enabled: !!user });
 
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold">Meu perfil</h1>
-        <p className="text-sm text-muted-foreground">Atualize seus dados.</p>
+        <p className="text-sm text-muted-foreground">Seus dados são geridos no ADM MAX.</p>
       </div>
+      <Card><CardContent className="space-y-4 pt-6">
+        <div className="space-y-2"><Label>E-mail</Label><Input value={user?.email ?? ""} disabled /></div>
+        <div className="space-y-2"><Label>Nome</Label><Input value={ctx?.nome ?? ""} disabled /></div>
+        <div>
+          <Label>Perfil de acesso</Label>
+          <div className="mt-2">
+            {ctx?.role
+              ? <Badge>{ROLE_LABEL[ctx.role]}</Badge>
+              : <Badge variant="secondary">Sem acesso ao catálogo (procure o administrador da sua agência)</Badge>}
+          </div>
+        </div>
+      </CardContent></Card>
+
       <Card><CardContent className="pt-6">
-        <form className="space-y-4" onSubmit={save}>
-          <div className="space-y-2">
-            <Label>E-mail</Label>
-            <Input value={user?.email ?? ""} disabled />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome completo</Label>
-            <Input id="name" value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <Label>Perfil de acesso</Label>
-            <div className="mt-2">
-              <Badge variant={isAdmin ? "default" : "secondary"}>{isAdmin ? "Administrador" : "Aluno"}</Badge>
-            </div>
-          </div>
-          <Button type="submit" disabled={loading}>{loading ? "Salvando…" : "Salvar"}</Button>
-        </form>
+        <h2 className="mb-3 text-lg font-bold">Meu histórico</h2>
+        {!history?.length && <p className="text-sm text-muted-foreground">Nenhuma aula assistida ainda.</p>}
+        <ul className="divide-y divide-border text-sm">
+          {history?.map((h) => (
+            <li key={h.lesson_id} className="flex items-center justify-between gap-3 py-2">
+              <div className="min-w-0">
+                <div className="truncate font-medium">{h.lesson_title}</div>
+                <div className="truncate text-xs text-muted-foreground">{h.course_title}</div>
+              </div>
+              <div className="whitespace-nowrap text-xs">
+                {h.completed ? `Concluída em ${new Date(h.completed_at!).toLocaleDateString("pt-BR")}` : `${Math.round(h.percent)}%`}
+              </div>
+            </li>
+          ))}
+        </ul>
       </CardContent></Card>
     </div>
   );

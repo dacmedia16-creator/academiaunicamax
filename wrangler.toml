@@ -13,3 +13,11 @@ keep_vars = true
 # SUPABASE_URL = "https://<ref-adm>.supabase.co"
 # SUPABASE_PUBLISHABLE_KEY = "sb_publishable_..."
 # VITE_SITE_URL = "https://<dominio-definitivo>"
+
+# Vídeo (Cloudflare Stream). Enquanto o Stream não for ativado, use o modo simulado
+# só em homologação: ACADEMIA_VIDEO_MOCK = "true". Em produção deixe "false".
+# ACADEMIA_VIDEO_MOCK = "false"
+# STREAM_CUSTOMER_CODE = "<código do subdomínio customer-XXXX.cloudflarestream.com>"
+# Segredos (NUNCA aqui; só via `wrangler secret put`):
+#   STREAM_SIGNING_KEY_ID   -> "id" devolvido por POST /accounts/{id}/stream/keys
+#   STREAM_SIGNING_KEY_JWK  -> "jwk" (base64) devolvido pela mesma chamada

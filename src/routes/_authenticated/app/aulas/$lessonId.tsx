@@ -1,16 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchLesson, fetchCourseTree, fetchMyProgress, isLessonUnlocked, orderPublishedLessons, upsertProgress, type Lesson } from "@/lib/courses";
+import { useServerFn } from "@tanstack/react-start";
+import { fetchLesson, fetchCourseTree, fetchMyProgress, isLessonUnlocked, orderPublishedLessons, saveProgress, type Lesson } from "@/lib/courses";
+import { LessonPlayer } from "@/lib/video";
+import { getLessonPlayback } from "@/lib/video/playback.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/aulas/$lessonId")({
   component: LessonPage,
 });
+
+/** Gravação moderada: a cada 60 s de reprodução, ao pausar, ao concluir e ao sair. Nunca por segundo. */
+const SAVE_EVERY_MS = 60_000;
+const DONE_PCT = 90;
 
 function LessonPage() {
   const { lessonId } = Route.useParams();
@@ -27,30 +34,24 @@ function LessonPage() {
     setChecked(false); setUnlocked(null);
     isLessonUnlocked(lessonId).then((ok) => {
       setUnlocked(ok); setChecked(true);
-      if (!ok) {
-        toast.warning("Aula bloqueada", { description: "Conclua a aula anterior para acessar esta." });
-      }
+      if (!ok) toast.warning("Aula bloqueada", { description: "Conclua a aula anterior para acessar esta." });
     });
   }, [lessonId]);
 
   const ordered: Lesson[] = tree ? orderPublishedLessons(tree) : [];
   const progressMap = new Map(progress?.map((p) => [p.lesson_id, p]) ?? []);
 
-  // Redirect to nearest available lesson if locked
   useEffect(() => {
     if (checked && unlocked === false && ordered.length > 0) {
-      // find first not-completed unlocked lesson
       let target = ordered[0].id;
-      for (let i = 0; i < ordered.length; i++) {
-        const p = progressMap.get(ordered[i].id);
-        if (!p?.completed) { target = ordered[i].id; break; }
-      }
+      for (const l of ordered) { if (!progressMap.get(l.id)?.completed) { target = l.id; break; } }
       if (target !== lessonId) navigate({ to: "/app/aulas/$lessonId", params: { lessonId: target }, replace: true });
       else if (courseId) navigate({ to: "/app/cursos/$courseId", params: { courseId }, replace: true });
     }
   }, [checked, unlocked, ordered.length]);
 
-  if (isLoading || !lesson) return <p className="text-sm text-muted-foreground">Carregando aula…</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando aula…</p>;
+  if (!lesson) return <p className="text-sm text-muted-foreground">Aula indisponível.</p>;
   if (!checked) return <p className="text-sm text-muted-foreground">Verificando acesso…</p>;
   if (unlocked === false) return null;
 
@@ -74,10 +75,14 @@ function LessonPage() {
         {lesson.description && <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{lesson.description}</p>}
       </div>
 
-      <Player lesson={lesson} onCompleted={() => {
-        qc.invalidateQueries();
-        toast.success("Aula concluída!", { description: next ? "Próxima aula desbloqueada." : "Você concluiu esta trilha." });
-      }} />
+      <LessonVideo
+        lesson={lesson}
+        stored={progressMap.get(lessonId)}
+        onCompleted={() => {
+          qc.invalidateQueries({ queryKey: ["progress"] });
+          toast.success("Aula concluída!", { description: next ? "Próxima aula desbloqueada." : "Você concluiu esta trilha." });
+        }}
+      />
 
       {next && (
         <Card>
@@ -98,83 +103,69 @@ function LessonPage() {
   );
 }
 
-function Player({ lesson, onCompleted }: { lesson: Lesson; onCompleted: () => void }) {
-  const [percent, setPercent] = useState(0);
-  const [done, setDone] = useState(false);
-  const lastSavedRef = useRef(0);
-  const lastPercentRef = useRef(0);
-  const lastPosRef = useRef(0);
+function LessonVideo({ lesson, stored, onCompleted }: {
+  lesson: Lesson;
+  stored?: { percent: number; position_seconds: number; completed: boolean };
+  onCompleted: () => void;
+}) {
+  const playbackFn = useServerFn(getLessonPlayback);
+  const { data: source, error } = useQuery({
+    queryKey: ["playback", lesson.id],
+    queryFn: () => playbackFn({ data: { lessonId: lesson.id } }),
+    staleTime: 30 * 60_000, // token vale 2 h; renovamos bem antes
+    retry: 1,
+  });
 
-  // Load stored progress once
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: userRes } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
-      if (!userRes.user) return;
-      const { data } = await (await import("@/integrations/supabase/client")).supabase
-        .from("lesson_progress").select("percent, position_seconds, completed")
-        .eq("user_id", userRes.user.id).eq("lesson_id", lesson.id).maybeSingle();
-      if (!cancelled && data) {
-        setPercent(Number(data.percent));
-        lastPercentRef.current = Number(data.percent);
-        lastPosRef.current = data.position_seconds;
-        setDone(!!data.completed);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [lesson.id]);
+  const [percent, setPercent] = useState(stored?.percent ?? 0);
+  const [done, setDone] = useState(!!stored?.completed);
+  const doneRef = useRef(done); doneRef.current = done;
+  const last = useRef({ pct: stored?.percent ?? 0, pos: stored?.position_seconds ?? 0, savedAt: 0, dirty: false });
 
-  async function persist(pct: number, pos: number, force = false) {
+  async function persist(force: boolean) {
     const now = Date.now();
-    if (!force && now - lastSavedRef.current < 10_000) return;
-    lastSavedRef.current = now;
+    if (!last.current.dirty && !force) return;
+    if (!force && now - last.current.savedAt < SAVE_EVERY_MS) return;
+    last.current.savedAt = now; last.current.dirty = false;
     try {
-      const res = await upsertProgress(lesson.id, pct, pos);
-      if (res && (res as any).completed && !done) {
-        setDone(true); onCompleted();
-      }
-    } catch (e) {
-      // ignore transient
-    }
+      const row = await saveProgress(lesson.id, last.current.pct, last.current.pos);
+      if (row?.completed && !doneRef.current) { setDone(true); onCompleted(); }
+    } catch { /* transitório: a próxima janela regrava */ }
   }
 
-  function onTimeUpdate(cur: number, dur: number) {
+  function onTime(cur: number, dur: number) {
     if (!dur) return;
     const pct = Math.min(100, (cur / dur) * 100);
-    lastPercentRef.current = pct; lastPosRef.current = cur;
-    setPercent(pct);
-    if (pct >= 90 && !done) {
-      persist(pct, cur, true);
-    } else {
-      persist(pct, cur);
-    }
+    last.current.pct = Math.max(last.current.pct, pct);
+    last.current.pos = cur; last.current.dirty = true;
+    setPercent((p) => Math.max(p, pct));
+    if (pct >= DONE_PCT && !doneRef.current) persist(true);
+    else persist(false);
   }
 
-  // save on unmount
   useEffect(() => {
-    return () => {
-      if (lastPercentRef.current > 0) {
-        upsertProgress(lesson.id, lastPercentRef.current, lastPosRef.current).catch(() => {});
-      }
-    };
+    const flush = () => { if (last.current.dirty) persist(true); };
+    const onVis = () => { if (document.visibilityState === "hidden") flush(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { document.removeEventListener("visibilitychange", onVis); flush(); };
   }, [lesson.id]);
-
-  async function markComplete() {
-    try {
-      const res = await upsertProgress(lesson.id, 100, lastPosRef.current);
-      setPercent(100); setDone(true); onCompleted();
-      return res;
-    } catch (e: any) {
-      toast.error("Não foi possível marcar como concluída");
-    }
-  }
-
-  const supportsProgress = lesson.video_provider === "url"; // native <video> exposes timeupdate
 
   return (
     <div className="space-y-4">
       <div className="aspect-video overflow-hidden rounded-xl bg-black shadow-lg">
-        <VideoEmbed lesson={lesson} onTimeUpdate={onTimeUpdate} />
+        {source ? (
+          <LessonPlayer
+            source={source}
+            title={lesson.title}
+            startAt={stored?.completed ? 0 : stored?.position_seconds ?? 0}
+            onTimeUpdate={onTime}
+            onPause={(cur, dur) => { onTime(cur, dur); persist(true); }}
+            onEnded={(dur) => { onTime(dur, dur); persist(true); }}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center p-6 text-center text-sm text-white/80">
+            {error ? "Vídeo indisponível no momento." : "Carregando vídeo…"}
+          </div>
+        )}
       </div>
       <div>
         <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
@@ -183,126 +174,6 @@ function Player({ lesson, onCompleted }: { lesson: Lesson; onCompleted: () => vo
         </div>
         <Progress value={percent} />
       </div>
-      {!supportsProgress && (
-        <Card className="bg-accent/40">
-          <CardContent className="flex flex-col items-stretch gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm">
-              Este provedor de vídeo não permite medir o progresso automaticamente com segurança.
-              Ao terminar de assistir, marque a aula como concluída para desbloquear a próxima.
-            </p>
-            <Button className="w-full sm:w-auto" onClick={markComplete} disabled={done}>
-              <CheckCircle2 className="mr-1 h-4 w-4" />{done ? "Concluída" : "Marcar como concluída"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
-
-function VideoEmbed({ lesson, onTimeUpdate }: { lesson: Lesson; onTimeUpdate: (cur: number, dur: number) => void }) {
-  const ref = useRef<HTMLVideoElement | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-
-  // YouTube: use IFrame API via origin postMessage polling (simpler: just embed and rely on duration_seconds heuristic).
-  useEffect(() => {
-    if (lesson.video_provider !== "youtube") return;
-    let cancelled = false;
-    const start = Date.now();
-    // We can't reliably read time without the YT API here; fall back to using elapsed play time
-    // capped by duration_seconds. This is a heuristic progress estimator.
-    const interval = window.setInterval(() => {
-      if (cancelled) return;
-      const elapsed = (Date.now() - start) / 1000;
-      const dur = lesson.duration_seconds || 0;
-      if (dur > 0) onTimeUpdate(Math.min(elapsed, dur), dur);
-    }, 5000);
-    return () => { cancelled = true; window.clearInterval(interval); };
-  }, [lesson.id]);
-
-  // Vimeo: postMessage timeupdate events
-  useEffect(() => {
-    if (lesson.video_provider !== "vimeo") return;
-    function onMsg(e: MessageEvent) {
-      try {
-        const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-        if (data?.event === "timeupdate" && data.data) {
-          onTimeUpdate(Number(data.data.seconds ?? 0), Number(data.data.duration ?? lesson.duration_seconds ?? 0));
-        }
-      } catch {}
-    }
-    window.addEventListener("message", onMsg);
-    // ask vimeo to send events
-    const iv = window.setInterval(() => {
-      try { iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ method: "addEventListener", value: "timeupdate" }), "*"); } catch {}
-    }, 2000);
-    return () => { window.removeEventListener("message", onMsg); window.clearInterval(iv); };
-  }, [lesson.id]);
-
-  if (lesson.video_provider === "url") {
-    return (
-      <video ref={ref} className="h-full w-full" controls preload="metadata"
-        src={lesson.video_ref}
-        onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime, e.currentTarget.duration || lesson.duration_seconds || 0)}
-      />
-    );
-  }
-  if (lesson.video_provider === "vimeo") {
-    const id = extractVimeoId(lesson.video_ref);
-    if (!id) return <VideoUnavailable />;
-    const src = `https://player.vimeo.com/video/${id}?api=1`;
-    return <iframe ref={iframeRef} src={src} className="h-full w-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={lesson.title} />;
-  }
-  const id = extractYouTubeId(lesson.video_ref);
-  if (!id) return <VideoUnavailable />;
-  const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
-  return <iframe src={src} className="h-full w-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={lesson.title} />;
-}
-
-function VideoUnavailable() {
-  return (
-    <div className="flex h-full w-full items-center justify-center bg-black p-6 text-center text-sm text-white/80">
-      Vídeo indisponível — verifique o link cadastrado para esta aula.
-    </div>
-  );
-}
-
-function extractYouTubeId(ref: string): string | null {
-  const raw = (ref ?? "").trim();
-  if (!raw) return null;
-  // Try URL parsing
-  try {
-    const u = new URL(raw);
-    const host = u.hostname.replace(/^www\./, "");
-    if (host === "youtu.be") {
-      const id = u.pathname.slice(1).split("/")[0];
-      return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
-    }
-    if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
-      const v = u.searchParams.get("v");
-      if (v && /^[A-Za-z0-9_-]{6,}$/.test(v)) return v;
-      const parts = u.pathname.split("/").filter(Boolean);
-      const i = parts.findIndex((p) => p === "embed" || p === "shorts" || p === "v");
-      if (i >= 0 && parts[i + 1] && /^[A-Za-z0-9_-]{6,}$/.test(parts[i + 1])) return parts[i + 1];
-    }
-  } catch {}
-  // Bare id
-  if (/^[A-Za-z0-9_-]{6,}$/.test(raw)) return raw;
-  return null;
-}
-
-function extractVimeoId(ref: string): string | null {
-  const raw = (ref ?? "").trim();
-  if (!raw) return null;
-  if (/^\d+$/.test(raw)) return raw;
-  try {
-    const u = new URL(raw);
-    const parts = u.pathname.split("/").filter(Boolean);
-    for (let i = parts.length - 1; i >= 0; i--) {
-      if (/^\d+$/.test(parts[i])) return parts[i];
-    }
-  } catch {}
-  const m = raw.match(/(\d{6,})/);
-  return m ? m[1] : null;
-}
-

@@ -248,8 +248,8 @@ function CourseCard({ state }: { state: CourseState }) {
   const { status, firstLesson, coverUrl, totalDurationSecs, pct, done, total } = state;
   const mediaStatus: MediaCardStatus =
     status === "completed" ? "done" : status === "in-progress" ? "in-progress" : "new";
-  const thumb = coverUrl ?? (firstLesson ? videoThumbnailUrl(firstLesson.video_provider, firstLesson.video_ref) : null);
-  const thumbHQ = coverUrl ? null : firstLesson ? videoThumbnailUrlHQ(firstLesson.video_provider, firstLesson.video_ref) : null;
+  const thumb = coverUrl ?? (firstLesson ? videoThumbnailUrl(firstLesson.video_provider, firstLesson.video_id) : null);
+  const thumbHQ = coverUrl ? null : firstLesson ? videoThumbnailUrlHQ(firstLesson.video_provider, firstLesson.video_id) : null;
   const targetLessonId = state.nextLesson?.id;
 
   return (

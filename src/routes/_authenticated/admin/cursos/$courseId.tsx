@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCourse, fetchCourseTree } from "@/lib/courses";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowDown, ArrowUp, Trash2 } from "lucide-react";
-import { useIsAdmin } from "@/hooks/use-auth";
-import { assignCourseManager } from "@/lib/admin-users.functions";
+import { availableProviders, DEFAULT_PROVIDER, getAdapter } from "@/lib/video";
 
 export const Route = createFileRoute("/_authenticated/admin/cursos/$courseId")({
   component: EditCourse,
@@ -72,18 +70,28 @@ function EditCourse() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const currentLessons = tree?.find((m) => m.id === moduleId)?.lessons ?? [];
-    const { error } = await supabase.from("lessons").insert({
+    const provider = String(fd.get("provider") ?? DEFAULT_PROVIDER);
+    const adapter = getAdapter(provider);
+    const videoId = adapter?.validateVideoId(String(fd.get("vref") ?? "")) ?? null;
+    if (!adapter || !videoId) { toast.error(`ID de vídeo inválido. ${adapter?.idHint ?? ""}`); return; }
+    const masterRef = String(fd.get("master") ?? "").trim();
+    const { data: created, error } = await supabase.from("lessons").insert({
       module_id: moduleId,
       title: String(fd.get("ltitle") ?? "").trim(),
       description: String(fd.get("ldesc") ?? "").trim() || null,
-      video_provider: (String(fd.get("provider") ?? "youtube") as "youtube" | "vimeo" | "url"),
-      video_ref: String(fd.get("vref") ?? "").trim(),
+      video_provider: provider,
+      video_id: videoId,
       duration_seconds: Number(fd.get("dur") ?? 0) || 0,
       sort_order: currentLessons.length + 1,
       is_published: true,
-    });
-    if (error) toast.error(error.message);
-    else { (e.target as HTMLFormElement).reset(); qc.invalidateQueries(); }
+    }).select("id").single();
+    if (error) { toast.error(error.message); return; }
+    // Master (arquivo original fora do provedor) para permitir migrar de provedor no futuro.
+    if (masterRef && created) {
+      const { error: em } = await supabase.from("lesson_masters").upsert({ lesson_id: created.id, master_ref: masterRef });
+      if (em) toast.warning("Aula criada, mas o local do master não foi salvo: " + em.message);
+    }
+    (e.target as HTMLFormElement).reset(); qc.invalidateQueries();
   }
 
   async function moveLesson(moduleId: string, id: string, dir: -1 | 1) {
@@ -126,8 +134,6 @@ function EditCourse() {
         </form>
       </CardContent></Card>
 
-      <ManagersSection courseId={courseId} />
-
       <Card><CardContent className="pt-6">
         <h3 className="mb-4 text-lg font-bold">Módulos</h3>
         <form className="mb-4 flex gap-2" onSubmit={addModule}>
@@ -150,7 +156,7 @@ function EditCourse() {
                   <div key={l.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-accent/30 p-2 text-sm">
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{l.title}</div>
-                      <div className="text-xs text-muted-foreground">{l.video_provider} • {l.video_ref} • {l.duration_seconds}s</div>
+                      <div className="text-xs text-muted-foreground">{getAdapter(l.video_provider)?.label ?? l.video_provider} • {l.video_id} • {l.duration_seconds}s</div>
                     </div>
                     <div className="flex items-center gap-1">
                       <Switch checked={l.is_published} onCheckedChange={(v) => toggleLessonPub(l.id, v)} />
@@ -163,18 +169,17 @@ function EditCourse() {
               </div>
               <form onSubmit={(e) => addLesson(m.id, e)} className="mt-3 grid gap-2 sm:grid-cols-6">
                 <Input name="ltitle" placeholder="Título da aula" required className="sm:col-span-2" />
-                <Select name="provider" defaultValue="youtube">
+                <Select name="provider" defaultValue={DEFAULT_PROVIDER}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="vimeo">Vimeo</SelectItem>
-                    <SelectItem value="url">URL direta</SelectItem>
+                    {availableProviders().map((p) => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Input name="vref" placeholder="ID ou URL (YouTube/Vimeo)" required />
+                <Input name="vref" placeholder={getAdapter(DEFAULT_PROVIDER)?.idHint} required />
                 <Input name="dur" type="number" min={0} placeholder="Duração (s)" />
                 <Button type="submit">Adicionar aula</Button>
-                <Input name="ldesc" placeholder="Descrição (opcional)" className="sm:col-span-6" />
+                <Input name="ldesc" placeholder="Descrição (opcional)" className="sm:col-span-3" />
+                <Input name="master" placeholder="Local do arquivo original (ex.: drive://academia/masters/aula.mp4)" className="sm:col-span-3" />
               </form>
             </div>
           ))}
@@ -185,63 +190,3 @@ function EditCourse() {
   );
 }
 
-function ManagersSection({ courseId }: { courseId: string }) {
-  const isAdmin = useIsAdmin();
-  const qc = useQueryClient();
-  const assignFn = useServerFn(assignCourseManager);
-
-  const { data } = useQuery({
-    queryKey: ["course-managers-panel", courseId],
-    queryFn: async () => {
-      const { data: managerRoles } = await supabase.from("user_roles").select("user_id").eq("role", "manager");
-      const ids = (managerRoles ?? []).map((r) => r.user_id);
-      if (ids.length === 0) return { managers: [] as Array<{ id: string; email: string; full_name: string | null; assigned: boolean }> };
-      const [{ data: profiles }, { data: assigned }] = await Promise.all([
-        supabase.from("profiles").select("id, email, full_name").in("id", ids),
-        supabase.from("course_managers").select("user_id").eq("course_id", courseId),
-      ]);
-      const assignedSet = new Set((assigned ?? []).map((a) => a.user_id));
-      return {
-        managers: (profiles ?? []).map((p) => ({
-          id: p.id, email: p.email, full_name: p.full_name, assigned: assignedSet.has(p.id),
-        })),
-      };
-    },
-    enabled: isAdmin === true,
-  });
-
-  if (!isAdmin) return null;
-
-  async function toggle(userId: string, enabled: boolean) {
-    try {
-      await assignFn({ data: { course_id: courseId, user_id: userId, enabled } });
-      qc.invalidateQueries({ queryKey: ["course-managers-panel", courseId] });
-      toast.success(enabled ? "Gestor atribuído" : "Gestor removido");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro");
-    }
-  }
-
-  return (
-    <Card><CardContent className="pt-6">
-      <h3 className="mb-2 text-lg font-bold">Gestores do curso</h3>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Marque quais gestores podem editar, publicar e gerenciar módulos e aulas deste curso.
-      </p>
-      <div className="space-y-2">
-        {data?.managers.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum usuário com papel Gestor ainda. Promova um usuário na aba Usuários.</p>
-        )}
-        {data?.managers.map((m) => (
-          <div key={m.id} className="flex items-center justify-between rounded-md border border-border p-3">
-            <div className="min-w-0">
-              <div className="truncate font-medium">{m.full_name || m.email}</div>
-              <div className="text-xs text-muted-foreground">{m.email}</div>
-            </div>
-            <Switch checked={m.assigned} onCheckedChange={(v) => toggle(m.id, v)} aria-label="Atribuir gestor" />
-          </div>
-        ))}
-      </div>
-    </CardContent></Card>
-  );
-}

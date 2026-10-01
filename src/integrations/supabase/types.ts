@@ -12,42 +12,14 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  public: {
+  academia: {
     Tables: {
-      course_managers: {
-        Row: {
-          assigned_by: string | null
-          course_id: string
-          created_at: string
-          user_id: string
-        }
-        Insert: {
-          assigned_by?: string | null
-          course_id: string
-          created_at?: string
-          user_id: string
-        }
-        Update: {
-          assigned_by?: string | null
-          course_id?: string
-          created_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "course_managers_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       courses: {
         Row: {
           cover_url: string | null
           created_at: string
           description: string | null
+          exclusive_organization_id: string | null
           id: string
           is_published: boolean
           sort_order: number
@@ -57,6 +29,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          exclusive_organization_id?: string | null
           id?: string
           is_published?: boolean
           sort_order?: number
@@ -66,6 +39,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          exclusive_organization_id?: string | null
           id?: string
           is_published?: boolean
           sort_order?: number
@@ -73,13 +47,74 @@ export type Database = {
         }
         Relationships: []
       }
+      enrollments: {
+        Row: {
+          course_id: string
+          created_at: string
+          enrolled_by: string | null
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          enrolled_by?: string | null
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          enrolled_by?: string | null
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_masters: {
+        Row: {
+          checksum_sha256: string | null
+          lesson_id: string
+          master_ref: string
+          updated_at: string
+        }
+        Insert: {
+          checksum_sha256?: string | null
+          lesson_id: string
+          master_ref: string
+          updated_at?: string
+        }
+        Update: {
+          checksum_sha256?: string | null
+          lesson_id?: string
+          master_ref?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_masters_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: true
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_progress: {
         Row: {
           completed: boolean
           completed_at: string | null
-          id: string
           last_watched_at: string
           lesson_id: string
+          organization_id: string
           percent: number
           position_seconds: number
           user_id: string
@@ -87,9 +122,9 @@ export type Database = {
         Insert: {
           completed?: boolean
           completed_at?: string | null
-          id?: string
           last_watched_at?: string
           lesson_id: string
+          organization_id: string
           percent?: number
           position_seconds?: number
           user_id: string
@@ -97,9 +132,9 @@ export type Database = {
         Update: {
           completed?: boolean
           completed_at?: string | null
-          id?: string
           last_watched_at?: string
           lesson_id?: string
+          organization_id?: string
           percent?: number
           position_seconds?: number
           user_id?: string
@@ -124,8 +159,9 @@ export type Database = {
           module_id: string
           sort_order: number
           title: string
-          video_provider: Database["public"]["Enums"]["video_provider"]
-          video_ref: string
+          video_hash: string | null
+          video_id: string
+          video_provider: string
         }
         Insert: {
           created_at?: string
@@ -136,8 +172,9 @@ export type Database = {
           module_id: string
           sort_order?: number
           title: string
-          video_provider?: Database["public"]["Enums"]["video_provider"]
-          video_ref?: string
+          video_hash?: string | null
+          video_id?: string
+          video_provider?: string
         }
         Update: {
           created_at?: string
@@ -148,8 +185,9 @@ export type Database = {
           module_id?: string
           sort_order?: number
           title?: string
-          video_provider?: Database["public"]["Enums"]["video_provider"]
-          video_ref?: string
+          video_hash?: string | null
+          video_id?: string
+          video_provider?: string
         }
         Relationships: [
           {
@@ -196,83 +234,51 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string | null
-          full_name: string | null
-          id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          full_name?: string | null
-          id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          full_name?: string | null
-          id?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
+      can_manage_org: { Args: { _org: string }; Returns: boolean }
+      current_org: { Args: never; Returns: string }
+      current_role: { Args: never; Returns: string }
+      is_lesson_unlocked: { Args: { _lesson: string }; Returns: boolean }
+      is_platform: { Args: never; Returns: boolean }
+      is_platform_admin: { Args: { _user: string }; Returns: boolean }
+      legacy_org_id: { Args: never; Returns: string }
+      list_org_people: {
+        Args: never
+        Returns: {
+          email: string
+          nome: string
+          role: string
+          user_id: string
+        }[]
       }
-      is_course_manager: {
-        Args: { _course_id: string; _user_id: string }
-        Returns: boolean
+      managed_org: { Args: never; Returns: string }
+      my_context: { Args: never; Returns: Json }
+      my_history: {
+        Args: never
+        Returns: {
+          completed: boolean
+          completed_at: string
+          course_id: string
+          course_title: string
+          last_watched_at: string
+          lesson_id: string
+          lesson_title: string
+          percent: number
+        }[]
       }
-      is_lesson_unlocked: {
-        Args: { _lesson_id: string; _user_id: string }
-        Returns: boolean
-      }
-      upsert_lesson_progress: {
-        Args: {
-          _lesson_id: string
-          _percent: number
-          _position_seconds: number
-        }
+      purge_orphans: { Args: never; Returns: number }
+      save_progress: {
+        Args: { _lesson: string; _percent: number; _position: number }
         Returns: {
           completed: boolean
           completed_at: string | null
-          id: string
           last_watched_at: string
           lesson_id: string
+          organization_id: string
           percent: number
           position_seconds: number
           user_id: string
@@ -284,10 +290,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      user_org: { Args: { _user: string }; Returns: string }
+      user_role: { Args: { _user: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "student" | "manager"
-      video_provider: "youtube" | "vimeo" | "url"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -303,12 +310,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -332,11 +339,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -357,11 +364,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -382,11 +389,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -399,11 +406,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -413,10 +420,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  public: {
-    Enums: {
-      app_role: ["admin", "student", "manager"],
-      video_provider: ["youtube", "vimeo", "url"],
-    },
+  academia: {
+    Enums: {},
   },
 } as const

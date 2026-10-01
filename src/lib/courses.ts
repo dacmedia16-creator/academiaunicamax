@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { VideoProviderId } from "@/lib/video";
 
+// Cliente já aponta para o schema `academia` (db.schema). Catálogo global; progresso por agência.
 export type Course = {
   id: string; title: string; description: string | null;
   cover_url: string | null; is_published: boolean; sort_order: number;
@@ -7,7 +9,7 @@ export type Course = {
 export type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number };
 export type Lesson = {
   id: string; module_id: string; title: string; description: string | null;
-  video_provider: "youtube" | "vimeo" | "url"; video_ref: string;
+  video_provider: VideoProviderId; video_id: string; video_hash: string | null;
   duration_seconds: number; sort_order: number; is_published: boolean;
 };
 export type Progress = {
@@ -37,19 +39,18 @@ export async function fetchCourseTree(courseId: string) {
   ]);
   if (e1) throw e1; if (e2) throw e2;
   const modules = (mods ?? []) as Module[];
-  const allLessons = (lessons ?? []) as Lesson[];
-  const grouped = modules.map((m) => ({
+  const allLessons = (lessons ?? []) as unknown as Lesson[];
+  return modules.map((m) => ({
     ...m,
     lessons: allLessons.filter((l) => l.module_id === m.id).sort((a, b) => a.sort_order - b.sort_order),
   }));
-  return grouped;
 }
 
 export async function fetchLesson(id: string) {
   const { data, error } = await supabase.from("lessons").select("*, modules!inner(id, course_id, sort_order, title)")
     .eq("id", id).maybeSingle();
   if (error) throw error;
-  return data as (Lesson & { modules: { id: string; course_id: string; sort_order: number; title: string } }) | null;
+  return data as unknown as (Lesson & { modules: { id: string; course_id: string; sort_order: number; title: string } }) | null;
 }
 
 export async function fetchMyProgress(courseId?: string): Promise<Progress[]> {
@@ -67,27 +68,40 @@ export async function fetchMyProgress(courseId?: string): Promise<Progress[]> {
   }));
 }
 
-/** Ordered published lesson ids for a course, respecting module + lesson order. */
+/** Ordered published lessons for a course, respecting module + lesson order. */
 export function orderPublishedLessons(tree: Array<Module & { lessons: Lesson[] }>): Lesson[] {
   return tree
     .slice().sort((a, b) => a.sort_order - b.sort_order)
     .flatMap((m) => m.lessons.filter((l) => l.is_published).sort((a, b) => a.sort_order - b.sort_order));
 }
 
+/** Desbloqueio sequencial decidido no servidor (academia.is_lesson_unlocked). */
 export async function isLessonUnlocked(lessonId: string): Promise<boolean> {
-  const { data: userRes } = await supabase.auth.getUser();
-  if (!userRes.user) return false;
-  const { data, error } = await supabase.rpc("is_lesson_unlocked", {
-    _user_id: userRes.user.id, _lesson_id: lessonId,
-  });
+  const { data, error } = await supabase.rpc("is_lesson_unlocked", { _lesson: lessonId });
   if (error) return false;
   return !!data;
 }
 
-export async function upsertProgress(lessonId: string, percent: number, positionSeconds: number) {
-  const { data, error } = await supabase.rpc("upsert_lesson_progress", {
-    _lesson_id: lessonId, _percent: percent, _position_seconds: Math.floor(positionSeconds),
+/**
+ * Grava progresso pela RPC academia.save_progress (única forma de escrita; valida desbloqueio,
+ * deriva a agência no servidor e ignora regravações < 30 s sem mudança de conclusão).
+ */
+export async function saveProgress(lessonId: string, percent: number, positionSeconds: number) {
+  const { data, error } = await supabase.rpc("save_progress", {
+    _lesson: lessonId, _percent: Math.round(percent * 100) / 100, _position: Math.floor(positionSeconds),
   });
   if (error) throw error;
-  return data;
+  return data as unknown as Progress;
+}
+
+export type HistoryItem = {
+  course_id: string; course_title: string; lesson_id: string; lesson_title: string;
+  percent: number; completed: boolean; completed_at: string | null; last_watched_at: string;
+};
+
+/** Histórico próprio — inclusive de quem foi desligado (sem catálogo). */
+export async function fetchMyHistory(): Promise<HistoryItem[]> {
+  const { data, error } = await supabase.rpc("my_history");
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ ...r, percent: Number(r.percent) })) as HistoryItem[];
 }
