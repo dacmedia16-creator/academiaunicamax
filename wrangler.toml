@@ -1,0 +1,15 @@
+# Cloudflare Worker da Academia Única MAX (mesmo padrão do ADM MAX).
+# O Nitro (preset cloudflare-module) lê este arquivo no build e completa main/assets/flags.
+name = "academia-unica-max"
+compatibility_date = "2026-10-01"
+
+# Preserva variáveis/segredos configurados no painel entre deploys.
+keep_vars = true
+
+# Variáveis públicas (não são segredo). Preencher na fase de publicação com a URL
+# e a publishable key do Supabase do ADM MAX. NUNCA colocar service_role aqui:
+# use `wrangler secret put SUPABASE_SERVICE_ROLE_KEY`.
+[vars]
+# SUPABASE_URL = "https://<ref-adm>.supabase.co"
+# SUPABASE_PUBLISHABLE_KEY = "sb_publishable_..."
+# VITE_SITE_URL = "https://<dominio-definitivo>"

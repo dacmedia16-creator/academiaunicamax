@@ -6,7 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import bannerAsset from "@/assets/academia-remax-banner.png.asset.json";
 import logoAsset from "@/assets/academia-remax-logo.png.asset.json";
 
-const OG_IMAGE = "https://academiaunicamax.lovable.app/__l5e/assets-v1/1dc23e01-e660-455d-9cdb-b52a7484c596/academia-remax-logo.png";
+// URL pública definitiva vem de VITE_SITE_URL (definida no build); sem ela, usa caminhos relativos.
+const SITE_URL = (import.meta.env.VITE_SITE_URL ?? "").replace(/\/$/, "");
+const OG_IMAGE = `${SITE_URL}/assets/academia-remax-logo.png`;
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -17,12 +19,12 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { property: "og:url", content: "https://academiaunicamax.lovable.app/" },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:image", content: OG_IMAGE },
       { property: "og:image:alt", content: "Academia RE/MAX — Plataforma de treinamentos" },
       { name: "twitter:image", content: OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: "https://academiaunicamax.lovable.app/" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
   }),
   component: LandingPage,
 });
