@@ -22,6 +22,8 @@ export type PlayerProps = PlayerEvents & {
   title: string;
   /** posição salva para retomar (segundos) */
   startAt: number;
+  /** Capa exibida antes do play (URL absoluta ou relativa ao site). */
+  posterUrl?: string | null;
 };
 
 export type VideoProviderAdapter = {

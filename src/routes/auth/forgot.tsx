@@ -25,7 +25,7 @@ function ForgotPage() {
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: "https://academia.unicaescolha.com.br/auth/reset-password",
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }

@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandMark } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
+import { hasActiveAdmAccess } from "@/lib/adm-access";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-// Login único com o ADM MAX: mesmo e-mail e senha. Não há cadastro na Academia —
-// contas, agências e papéis são criados no ADM.
+const GOOGLE_LOGIN_URL = "https://conta-max-poc.dacmedia16.workers.dev/login?app=academia-max";
+
+// A Academia não cria contas no Auth do ADM; só contas já existentes podem entrar.
 const loginSchema = z.object({
   email: z.string().trim().email("E-mail inválido"),
   password: z.string().min(1, "Informe a senha"),
@@ -37,9 +39,20 @@ function AuthPage() {
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword(parsed.data);
+    const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+    if (error || !data.user) {
+      setLoading(false);
+      toast.error("Não foi possível entrar. Verifique seus dados.");
+      return;
+    }
+    const allowed = await hasActiveAdmAccess().catch(() => false);
+    if (!allowed) {
+      await supabase.auth.signOut({ scope: "local" });
+      setLoading(false);
+      toast.error("Acesso restrito a contas ativas do ADM MAX.");
+      return;
+    }
     setLoading(false);
-    if (error) { toast.error("Não foi possível entrar. Verifique seus dados."); return; }
     toast.success("Bem-vindo!");
     navigate({ to: "/app" });
   }
@@ -50,9 +63,13 @@ function AuthPage() {
         <BrandMark />
         <Card className="mt-8 w-full">
           <CardContent className="pt-6">
-            <h1 className="text-lg font-bold">Entrar</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Use o mesmo e-mail e senha do ADM MAX.</p>
-            <form onSubmit={onLogin} className="mt-4 space-y-4">
+            <h1 className="text-xl font-semibold">Entrar na Academia</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Use sua conta ativa no ADM MAX.</p>
+            <Button type="button" variant="outline" className="mt-5 w-full" asChild>
+              <a href={GOOGLE_LOGIN_URL}>Entrar com Google</a>
+            </Button>
+            <div className="my-5 text-center text-xs text-muted-foreground">ou entre com sua senha</div>
+            <form onSubmit={onLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="l-email">E-mail</Label>
                 <Input id="l-email" name="email" type="email" required autoComplete="email" />

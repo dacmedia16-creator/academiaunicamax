@@ -46,6 +46,24 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const url = new URL(request.url);
+    const forwarded = request.headers.get("x-forwarded-proto")?.toLowerCase();
+    let cfScheme: string | undefined;
+    try {
+      cfScheme = JSON.parse(request.headers.get("cf-visitor") ?? "{}").scheme;
+    } catch {
+      // Um cabeçalho malformado não altera a decisão baseada na URL.
+    }
+    if (url.hostname === "academia.unicaescolha.com.br" &&
+      (url.protocol === "http:" || forwarded === "http" || cfScheme === "http")) {
+      return new Response(null, {
+        status: 301,
+        headers: {
+          Location: `https://academia.unicaescolha.com.br${url.pathname}${url.search}`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

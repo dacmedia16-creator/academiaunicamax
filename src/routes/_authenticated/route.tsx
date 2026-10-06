@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { hasActiveAdmAccess } from "@/lib/adm-access";
 import { SiteHeader } from "@/components/site-header";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -7,6 +8,10 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    if (!(await hasActiveAdmAccess().catch(() => false))) {
+      await supabase.auth.signOut({ scope: "local" });
+      throw redirect({ to: "/auth" });
+    }
     return { user: data.user };
   },
   component: AuthedLayout,

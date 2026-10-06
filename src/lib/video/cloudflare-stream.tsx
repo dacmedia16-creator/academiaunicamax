@@ -33,7 +33,7 @@ function loadSdk(): Promise<void> {
   return sdkPromise;
 }
 
-function StreamPlayerView({ source, title, startAt, onTimeUpdate, onPause, onEnded }: PlayerProps) {
+function StreamPlayerView({ source, title, startAt, posterUrl, onTimeUpdate, onPause, onEnded }: PlayerProps) {
   const ref = useRef<HTMLIFrameElement | null>(null);
   const handlers = useRef({ onTimeUpdate, onPause, onEnded });
   handlers.current = { onTimeUpdate, onPause, onEnded };
@@ -64,7 +64,14 @@ function StreamPlayerView({ source, title, startAt, onTimeUpdate, onPause, onEnd
 
   if (source.mode !== "stream") return <></>;
   // startTime retoma de onde parou; sem parâmetro de download (downloads ficam desativados no Stream).
-  const src = startAt > 5 ? `${source.iframeSrc}?startTime=${Math.floor(startAt)}` : source.iframeSrc;
+  // poster: parâmetro oficial do player do Stream (URL absoluta da capa, codificada).
+  const params = new URLSearchParams();
+  if (startAt > 5) params.set("startTime", String(Math.floor(startAt)));
+  if (posterUrl && typeof window !== "undefined") {
+    params.set("poster", new URL(posterUrl, window.location.origin).toString());
+  }
+  const qs = params.toString();
+  const src = qs ? `${source.iframeSrc}${source.iframeSrc.includes("?") ? "&" : "?"}${qs}` : source.iframeSrc;
   return (
     <iframe
       ref={ref}
