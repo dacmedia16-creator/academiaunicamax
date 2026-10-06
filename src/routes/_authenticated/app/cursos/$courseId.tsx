@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchCourse, fetchCourseTree, fetchMyProgress, orderPublishedLessons, type Lesson } from "@/lib/courses";
+import { fetchCourse, fetchCourseTree, fetchMyProgress, orderPublishedLessons } from "@/lib/courses";
+import { lessonCardState } from "@/lib/lesson-card";
+import { lessonCoverUrl } from "@/lib/lesson-covers";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, ArrowRight, BookOpen } from "lucide-react";
-import { MediaCard, type MediaCardStatus } from "@/components/media-card";
+import { MediaCard } from "@/components/media-card";
 import { videoThumbnailUrl, videoThumbnailUrlHQ } from "@/lib/video-thumbnail";
 
 export const Route = createFileRoute("/_authenticated/app/cursos/$courseId")({
@@ -22,15 +24,6 @@ function CourseDetail() {
   const progressMap = new Map(progress?.map((p) => [p.lesson_id, p]) ?? []);
   const doneCount = ordered.filter((l) => progressMap.get(l.id)?.completed).length;
   const pct = ordered.length ? Math.round((doneCount / ordered.length) * 100) : 0;
-
-  function stateFor(lesson: Lesson): "done" | "available" | "locked" {
-    const p = progressMap.get(lesson.id);
-    if (p?.completed) return "done";
-    const idx = ordered.findIndex((l) => l.id === lesson.id);
-    if (idx <= 0) return "available";
-    const prev = ordered[idx - 1];
-    return progressMap.get(prev.id)?.completed ? "available" : "locked";
-  }
 
   if (!course) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
@@ -85,21 +78,20 @@ function CourseDetail() {
             {m.description && <p className="mb-3 text-sm text-muted-foreground">{m.description}</p>}
             <div className="grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {m.lessons.filter((l) => l.is_published).map((l) => {
-                const s = stateFor(l);
-                const p = progressMap.get(l.id);
-                const disabled = s === "locked";
-                const mediaStatus: MediaCardStatus =
-                  s === "done" ? "done" : s === "locked" ? "locked" : p && p.percent > 0 ? "in-progress" : "not-started";
-                const hint = p && !p.completed && p.percent > 0 ? `${Math.round(p.percent)}% assistido` : undefined;
+                const st = lessonCardState(ordered, progressMap, l.id);
+                const disabled = st.locked;
+                const number = ordered.findIndex((o) => o.id === l.id) + 1;
                 return (
                   <MediaCard
                     key={l.id}
+                    eyebrow={number > 0 ? `Aula ${number}` : undefined}
                     title={l.title}
-                    thumbnailUrl={videoThumbnailUrl(l.video_provider, l.video_id)}
-                    thumbnailUrlHQ={videoThumbnailUrlHQ(l.video_provider, l.video_id)}
+                    subtitle={l.description?.trim() || null}
+                    thumbnailUrl={lessonCoverUrl(l.id) ?? videoThumbnailUrl(l.video_provider, l.video_id)}
+                    thumbnailUrlHQ={lessonCoverUrl(l.id) ? null : videoThumbnailUrlHQ(l.video_provider, l.video_id)}
                     durationSeconds={l.duration_seconds || undefined}
-                    status={mediaStatus}
-                    hint={hint}
+                    status={st.status}
+                    statusLabel={st.label}
                     disabled={disabled}
                     linkProps={disabled ? undefined : { to: "/app/aulas/$lessonId", params: { lessonId: l.id } }}
                   />

@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { fetchLesson, fetchCourseTree, fetchMyProgress, isLessonUnlocked, orderPublishedLessons, saveProgress, type Lesson } from "@/lib/courses";
 import { LessonPlayer } from "@/lib/video";
 import { getLessonPlayback } from "@/lib/video/playback.functions";
+import { lessonCoverUrl } from "@/lib/lesson-covers";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -156,6 +157,7 @@ function LessonVideo({ lesson, stored, onCompleted }: {
           <LessonPlayer
             source={source}
             title={lesson.title}
+            posterUrl={lessonCoverUrl(lesson.id)}
             startAt={stored?.completed ? 0 : stored?.position_seconds ?? 0}
             onTimeUpdate={onTime}
             onPause={(cur, dur) => { onTime(cur, dur); persist(true); }}

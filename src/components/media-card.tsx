@@ -2,10 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Clock, Lock, PlayCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type MediaCardStatus = "done" | "in-progress" | "not-started" | "new" | "locked";
+export type MediaCardStatus = "done" | "in-progress" | "not-started" | "available" | "new" | "locked";
 
 export type MediaCardProps = {
   title: string;
+  /** Linha curta acima do título, ex.: "Aula 3". */
+  eyebrow?: string;
+  /** Assunto/resumo (1–2 linhas). Omitido quando vazio. */
+  subtitle?: string | null;
+  /** Rótulo do estado, quando difere do padrão (ex.: "Em andamento 45%"). */
+  statusLabel?: string;
   thumbnailUrl: string | null;
   thumbnailUrlHQ?: string | null;
   durationSeconds?: number;
@@ -26,7 +32,7 @@ function fmtDuration(s?: number) {
   return sec ? `${m}m ${sec}s` : `${m}m`;
 }
 
-function StatusBadge({ status }: { status: MediaCardStatus }) {
+function StatusBadge({ status, label }: { status: MediaCardStatus; label?: string }) {
   const map: Record<MediaCardStatus, { label: string; icon: React.ReactNode; className: string }> = {
     done: {
       label: "Concluída",
@@ -43,6 +49,11 @@ function StatusBadge({ status }: { status: MediaCardStatus }) {
       icon: <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />,
       className: "text-muted-foreground",
     },
+    available: {
+      label: "Disponível",
+      icon: <PlayCircle className="h-3 w-3" />,
+      className: "text-[color:var(--color-brand)]",
+    },
     new: {
       label: "Novo",
       icon: <Sparkles className="h-3 w-3" />,
@@ -58,7 +69,7 @@ function StatusBadge({ status }: { status: MediaCardStatus }) {
   return (
     <span className={cn("inline-flex items-center gap-1 font-medium", s.className)}>
       {s.icon}
-      {s.label}
+      {label ?? s.label}
     </span>
   );
 }
@@ -139,18 +150,22 @@ function Thumbnail({
 }
 
 export function MediaCard(props: MediaCardProps) {
-  const { title, durationSeconds, status, hint, linkProps, disabled } = props;
+  const { title, eyebrow, subtitle, statusLabel, durationSeconds, status, hint, linkProps, disabled } = props;
   const duration = fmtDuration(durationSeconds);
 
   const body = (
     <div className={cn("group block", disabled && "pointer-events-none opacity-60")}>
       <Thumbnail {...props} />
       <div className="mt-2.5 space-y-1">
-        <h3 className="line-clamp-2 min-h-[2.25rem] text-sm font-semibold leading-snug sm:min-h-[2.5rem]">{title}</h3>
+        {eyebrow && (
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--color-brand)]">{eyebrow}</div>
+        )}
+        <h3 className={cn("line-clamp-2 text-sm font-semibold leading-snug", !subtitle && "min-h-[2.25rem] sm:min-h-[2.5rem]")}>{title}</h3>
+        {subtitle && <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">{subtitle}</p>}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-tight text-muted-foreground">
           {duration && <span>{duration}</span>}
           {duration && <span aria-hidden>·</span>}
-          <StatusBadge status={status} />
+          <StatusBadge status={status} label={statusLabel} />
           {hint && (
             <>
               <span aria-hidden>·</span>

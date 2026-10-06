@@ -158,6 +158,16 @@ function ContinueHero({ state }: { state: CourseState }) {
               <Progress value={state.pct} className="h-2 bg-white/20" />
             </div>
           </div>
+          {state.coverUrl && (
+            <Link
+              to="/app/cursos/$courseId"
+              params={{ courseId: state.id }}
+              aria-label={state.title}
+              className="block w-full shrink-0 overflow-hidden rounded-xl shadow-md ring-1 ring-white/20 transition hover:brightness-110 md:w-64"
+            >
+              <img src={state.coverUrl} alt="" className="aspect-video w-full object-cover" />
+            </Link>
+          )}
           <div className="flex shrink-0 flex-col gap-2 md:items-end">
             {target ? (
               <Button
@@ -165,7 +175,11 @@ function ContinueHero({ state }: { state: CourseState }) {
                 className="w-full bg-[color:var(--color-brand-red)] font-semibold text-white shadow-md hover:brightness-110 sm:w-auto"
                 asChild
               >
-                <Link to="/app/aulas/$lessonId" params={{ lessonId: target.id }}>
+                <Link
+                  {...(isNew
+                    ? { to: "/app/cursos/$courseId", params: { courseId: state.id } }
+                    : { to: "/app/aulas/$lessonId", params: { lessonId: target.id } })}
+                >
                   {isNew ? "Começar agora" : "Retomar aula"}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
@@ -250,8 +264,6 @@ function CourseCard({ state }: { state: CourseState }) {
     status === "completed" ? "done" : status === "in-progress" ? "in-progress" : "new";
   const thumb = coverUrl ?? (firstLesson ? videoThumbnailUrl(firstLesson.video_provider, firstLesson.video_id) : null);
   const thumbHQ = coverUrl ? null : firstLesson ? videoThumbnailUrlHQ(firstLesson.video_provider, firstLesson.video_id) : null;
-  const targetLessonId = state.nextLesson?.id;
-
   return (
     <div className="space-y-2">
       <MediaCard
@@ -261,11 +273,7 @@ function CourseCard({ state }: { state: CourseState }) {
         durationSeconds={totalDurationSecs || undefined}
         status={mediaStatus}
         hint={total ? `${done}/${total} aulas` : undefined}
-        linkProps={
-          targetLessonId
-            ? { to: "/app/aulas/$lessonId", params: { lessonId: targetLessonId } }
-            : { to: "/app/cursos/$courseId", params: { courseId: state.id } }
-        }
+        linkProps={{ to: "/app/cursos/$courseId", params: { courseId: state.id } }}
       />
       {total > 0 && <Progress value={pct} className="h-1" />}
     </div>
