@@ -3,20 +3,18 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsStaff, useUser } from "@/hooks/use-auth";
+import { useCanSeeTeam, useIsStaff, useUser } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Menu, Shield, User as UserIcon } from "lucide-react";
-import logoAsset from "@/assets/academia-remax-logo.png.asset.json";
+import { LogOut, Menu, Shield, User as UserIcon, Users } from "lucide-react";
+const BALLOON_URL = "/assets/balao-remax.png";
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <Link to="/" className="flex min-w-0 items-center gap-2">
-      <img src={logoAsset.url} alt="Academia RE/MAX" className="h-9 w-9 shrink-0 rounded-full object-contain sm:h-10 sm:w-10" />
+      <img src={BALLOON_URL} alt="" className="h-9 w-9 shrink-0 object-contain sm:h-10 sm:w-10" />
       {!compact && (
         <div className="min-w-0 leading-tight">
-          <div className="whitespace-pre-line font-display text-sm font-extrabold tracking-tight sm:text-base">
-            REMAX&nbsp;{"\n"}Única Escolha&nbsp;<span className="text-[color:var(--color-brand-red)]">Academy</span>
-          </div>
+          <div className="font-display text-sm font-extrabold tracking-tight text-foreground sm:text-base">Academia <span className="text-[color:var(--color-brand-red)]">RE/MAX</span></div>
           <div className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:block">Treinamentos</div>
         </div>
       )}
@@ -27,6 +25,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 export function SiteHeader() {
   const user = useUser();
   const isStaff = useIsStaff();
+  const canSeeTeam = useCanSeeTeam();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -49,6 +48,9 @@ export function SiteHeader() {
             <>
               <Link to="/app" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Início</Link>
               <Link to="/app/cursos" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Cursos</Link>
+              {canSeeTeam && (
+                <Link to="/app/equipe" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Minha equipe</Link>
+              )}
               <Link to="/app/perfil" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground" activeProps={{ className: "bg-accent text-foreground" }}>Perfil</Link>
               {isStaff && (
                 <Link to="/admin" className="rounded-md px-3 py-2 text-sm font-medium text-[color:var(--color-brand-red)] hover:bg-accent" activeProps={{ className: "bg-accent" }}>
@@ -87,6 +89,11 @@ export function SiteHeader() {
                   <nav className="flex flex-col p-2">
                     <MobileNavLink to="/app" onClick={() => setOpen(false)}>Início</MobileNavLink>
                     <MobileNavLink to="/app/cursos" onClick={() => setOpen(false)}>Cursos</MobileNavLink>
+                    {canSeeTeam && (
+                      <MobileNavLink to="/app/equipe" onClick={() => setOpen(false)}>
+                        <Users className="h-4 w-4" /> Minha equipe
+                      </MobileNavLink>
+                    )}
                     <MobileNavLink to="/app/perfil" onClick={() => setOpen(false)}>Perfil</MobileNavLink>
                     {isStaff && (
                       <MobileNavLink to="/admin" onClick={() => setOpen(false)} accent>

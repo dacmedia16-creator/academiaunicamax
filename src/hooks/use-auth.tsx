@@ -65,8 +65,14 @@ export function useIsPlatform() {
   return r === undefined ? undefined : r === "platform";
 }
 
-/** Acesso ao painel: plataforma, admin ou gestor da agência. */
+/** Painel do catálogo: apenas a plataforma. */
 export function useIsStaff() {
+  const r = useRole();
+  return r === undefined ? undefined : r === "platform";
+}
+
+/** Tela "Minha equipe": gestor/líder, admin da imobiliária e plataforma (o corretor não vê). */
+export function useCanSeeTeam() {
   const r = useRole();
   return r === undefined ? undefined : r === "platform" || r === "admin" || r === "manager";
 }

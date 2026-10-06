@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
 import { ArrowRight, BookOpen, CheckCircle2, PlayCircle, Sparkles, Trophy, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import bannerAsset from "@/assets/academia-remax-banner.png.asset.json";
-import logoAsset from "@/assets/academia-remax-logo.png.asset.json";
 
+const BALLOON_URL = "/assets/balao-remax.png";
+const BANNER_URL = "/cursos/capas/formacao-remax.webp";
 // URL pública definitiva vem de VITE_SITE_URL (definida no build); sem ela, usa caminhos relativos.
 const SITE_URL = (import.meta.env.VITE_SITE_URL ?? "").replace(/\/$/, "");
-const OG_IMAGE = `${SITE_URL}/assets/academia-remax-logo.png`;
+const OG_IMAGE = `${SITE_URL}${BALLOON_URL}`;
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -59,7 +59,7 @@ function LandingPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#ef2b2d] opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[#ef2b2d]" />
               </span>
-              Academia RE/MAX · Única Escolha
+              Academia RE/MAX
             </div>
             <h1 className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-7xl">
               Vender imóveis
@@ -98,7 +98,7 @@ function LandingPage() {
               <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#111a2e] glow-ring">
                 <div className="absolute inset-0 grid-neon opacity-40" />
                 <img
-                  src={bannerAsset.url}
+                  src={BANNER_URL}
                   alt="Academia RE/MAX"
                   className="relative z-10 h-auto w-full object-cover mix-blend-screen"
                   loading="eager"
@@ -163,7 +163,7 @@ function LandingPage() {
       <section className="relative mx-auto max-w-7xl px-4 pb-20">
         <div className="relative overflow-hidden rounded-3xl border border-white/10">
           <img
-            src={bannerAsset.url}
+            src={BANNER_URL}
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-40 mix-blend-screen"
             aria-hidden
@@ -171,7 +171,7 @@ function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-[#0b0f1a] via-[#111a2e]/85 to-[#ef2b2d]/70" />
           <div className="absolute inset-0 grid-neon opacity-30" />
           <div className="relative z-10 flex flex-col items-center gap-6 px-6 py-16 text-center md:py-24">
-            <img src={logoAsset.url} alt="Academia RE/MAX" className="h-14 w-14 rounded-full object-contain" />
+            <img src={BALLOON_URL} alt="Academia RE/MAX" className="h-14 w-14 rounded-full object-contain" />
             <h3 className="max-w-2xl font-display text-3xl font-extrabold leading-tight md:text-5xl">
               A próxima venda começa <span className="text-gradient-brand">agora</span>.
             </h3>
@@ -189,7 +189,7 @@ function LandingPage() {
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-xs text-white/50">
-        © {new Date().getFullYear()} RE/MAX Academy — Plataforma de treinamentos.
+        © {new Date().getFullYear()} Academia RE/MAX — Plataforma de treinamentos.
       </footer>
     </div>
   );
@@ -216,7 +216,7 @@ function ModuleTile({ label, span, index }: { label: string; span: string; index
       className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111a2e] ${span}`}
     >
       <img
-        src={bannerAsset.url}
+        src={BANNER_URL}
         alt=""
         className="absolute inset-0 h-full w-full object-cover opacity-50 transition duration-700 group-hover:scale-105 group-hover:opacity-70"
         aria-hidden

@@ -271,6 +271,24 @@ export type Database = {
         }[]
       }
       purge_orphans: { Args: never; Returns: number }
+      team_progress_overview: {
+        Args: never
+        Returns: {
+          user_id: string
+          nome: string | null
+          organization_id: string | null
+          organization_nome: string | null
+          team_id: string | null
+          team_nome: string | null
+          completed_lessons: number
+          total_lessons: number
+          current_lesson_id: string | null
+          current_lesson_title: string | null
+          current_lesson_position: number | null
+          current_lesson_in_progress: boolean
+          last_activity_at: string | null
+        }[]
+      }
       save_progress: {
         Args: { _lesson: string; _percent: number; _position: number }
         Returns: {

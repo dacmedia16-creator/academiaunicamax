@@ -1,4 +1,4 @@
-# RE/MAX Academy — Plataforma de treinamentos
+# Academia RE/MAX — Plataforma de treinamentos
 
 Plataforma educacional responsiva com autenticação, cursos em vídeo, progresso
 individual, desbloqueio sequencial de aulas e painel administrativo.
