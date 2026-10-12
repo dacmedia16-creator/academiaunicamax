@@ -11,7 +11,7 @@ import { hasActiveAdmAccess } from "@/lib/adm-access";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-const GOOGLE_LOGIN_URL = "https://conta-max-poc.dacmedia16.workers.dev/login?app=academia-max";
+const GOOGLE_LOGIN_URL = "https://conta.unicaescolha.com.br/login?app=academia-max";
 
 // A Academia não cria contas no Auth do ADM; só contas já existentes podem entrar.
 const loginSchema = z.object({
